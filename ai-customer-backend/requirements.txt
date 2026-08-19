@@ -37,3 +37,10 @@ pydantic-settings>=2.2
 python-multipart>=0.0.9
 orjson>=3.10
 python-dotenv>=1.0
+
+# ===== 开发与测试（代码审查基础设施）=====
+ruff>=0.4
+bandit>=1.7
+pytest>=8.0
+pytest-asyncio>=0.23
+fakeredis>=2.23

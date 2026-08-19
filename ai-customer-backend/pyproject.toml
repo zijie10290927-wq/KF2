@@ -1,0 +1,42 @@
+[project]
+name = "ai-customer-backend"
+version = "1.0.0"
+description = "AI出图产品智能客服 Agent 后端服务"
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+exclude = [
+    "alembic",
+    ".venv",
+    "data",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear（常见 bug 模式）
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "S",    # flake8-bandit（安全检查）
+    "T20",  # flake8-print（禁止 print 调试）
+    "RET",  # flake8-return
+]
+ignore = [
+    "E501",  # 行长由 formatter 处理
+    "S101",  # assert 在测试中可用
+    "B008",  # FastAPI Depends() 在默认参数中是惯例
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["T20", "S106", "S107"]  # 运维脚本允许 print 与硬编码测试口令
+"app/adapters/widget/static/*" = []     # 静态 JS 资源不做 Python 检查
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]

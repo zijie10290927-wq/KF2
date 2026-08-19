@@ -1,0 +1,43 @@
+repos:
+  # ===== 后端 Ruff（lint + format）=====
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^ai-customer-backend/
+      - id: ruff-format
+        files: ^ai-customer-backend/
+
+  # ===== 前端 ESLint + Prettier =====
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.57.0
+    hooks:
+      - id: eslint
+        files: ^ai-customer-frontend/src/.*\.(ts|vue)$
+        args: [--fix]
+        additional_dependencies:
+          - eslint@8.57.0
+          - eslint-plugin-vue@9.25.0
+          - '@vue/eslint-config-typescript@13.0.0'
+          - '@vue/eslint-config-prettier@9.0.0'
+          - typescript@5.4.5
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.1.0
+    hooks:
+      - id: prettier
+        files: ^ai-customer-frontend/src/.*\.(ts|vue|scss|css)$
+
+  # ===== 通用安全与卫生检查 =====
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files   # 禁止提交 >500KB 大文件
+        args: [--maxkb=500]
+      - id: detect-private-key        # 检测私钥文件
+      - id: check-merge-conflict      # 检查未解决的合并冲突
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        exclude: \.(md|html)$
