@@ -149,7 +149,10 @@ async function onSubmit() {
   submitting.value = true
   try {
     if (isEdit.value) {
-      await updateModel(editingId.value, { ...form })
+      // B6 修复：编辑时空 api_key 不提交（「留空则不修改」），防止密钥被意外清空
+      const payload = { ...form }
+      if (!payload.api_key) delete (payload as Record<string, unknown>).api_key
+      await updateModel(editingId.value, payload)
       ElMessage.success('更新成功')
     } else {
       await createModel({ ...form })

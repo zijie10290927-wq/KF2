@@ -436,6 +436,7 @@ function onEditConfig(row: ChannelConfig) {
   configForm.platform = row.platform
   configForm.display_name = row.display_name
   configForm.enabled = row.enabled
+  // 密钥字段置空 = 「留空则不修改」（后端对空值跳过更新，此处不回显真实密钥）
   configForm.api_token = ''
   configForm.webhook_secret = ''
   configForm.app_key = row.app_key || ''
@@ -447,7 +448,11 @@ function onEditConfig(row: ChannelConfig) {
 async function onSubmitConfig() {
   configSubmitting.value = true
   try {
-    await saveChannelConfig({ ...configForm })
+    // B6 修复：空密钥字段不提交，防止「留空则不修改」语义被后端行为变化破坏
+    const payload = { ...configForm }
+    if (!payload.api_token) delete payload.api_token
+    if (!payload.webhook_secret) delete payload.webhook_secret
+    await saveChannelConfig(payload)
     ElMessage.success('配置已保存')
     configDialogVisible.value = false
     await loadConfigs()
