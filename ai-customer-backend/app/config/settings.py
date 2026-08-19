@@ -113,6 +113,11 @@ class Settings(BaseSettings):
     CHATWOOT_API_BASE: str = ""
     CHATWOOT_ACCESS_TOKEN: str = ""
 
+    # SSRF 防护：callback_url 域名白名单（逗号分隔）
+    # 配置后，白名单内域名跳过内网 IP 封锁检查（用于可信回调端点）
+    # 支持 *.example.com 通配前缀
+    CALLBACK_URL_ALLOWLIST: str = ""
+
     # ===== 认证排除路径 (JWT 中间件白名单) =====
     AUTH_EXCLUDE_PATHS: str = (
         "/api/v1/auth/login,"

@@ -23,6 +23,7 @@ import httpx
 from app.adapters.base import BaseAdapter
 from app.config.settings import settings
 from app.exceptions import AdapterAuthError, AdapterSendError
+from app.security.url_guard import validate_callback_url
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +160,15 @@ class GenericAdapter(BaseAdapter):
                 "GenericAdapter.send_reply 需要 callback_url 参数"
             )
 
+        # SSRF 防护：校验 callback_url 不指向内网/环回/链路本地地址
+        try:
+            validated_url = validate_callback_url(callback_url)
+        except ValueError as e:
+            logger.warning("callback_url rejected (SSRF guard): %s", e)
+            raise AdapterSendError(
+                f"callback_url 安全校验失败，拒绝请求: {e}"
+            ) from e
+
         final_content = self.build_final_content(content, sources, fallback)
         payload = {
             "session_id": external_session_id,
@@ -171,7 +181,7 @@ class GenericAdapter(BaseAdapter):
 
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(callback_url, json=payload)
+                resp = await client.post(validated_url, json=payload)
             if resp.status_code >= 400:
                 raise AdapterSendError(
                     f"Generic callback HTTP {resp.status_code}: {resp.text[:200]}"
