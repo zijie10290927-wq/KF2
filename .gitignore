@@ -9,6 +9,7 @@ venv/
 .ruff_cache/
 htmlcov/
 .coverage
+.pre-commit-cache/
 
 # ===== Node =====
 node_modules/

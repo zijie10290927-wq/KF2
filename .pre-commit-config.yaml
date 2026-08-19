@@ -1,32 +1,37 @@
 repos:
   # ===== 后端 Ruff（lint + format）=====
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+  # language: system 直接调用后端 venv 中的 ruff，免 pre-commit 自建 virtualenv
+  # （既绕开本机 virtualenv .lock 写入限制，也加快首次提交）。
+  # 仓库相对路径定位二进制，提交前无需手动激活 venv。
+  - repo: local
     hooks:
       - id: ruff
-        args: [--fix]
-        files: ^ai-customer-backend/
+        name: ruff (backend)
+        language: system
+        entry: ai-customer-backend/.venv/Scripts/ruff.exe
+        args: [check, --fix, --exit-non-zero-on-fix]
+        files: ^ai-customer-backend/.*\.py$
       - id: ruff-format
-        files: ^ai-customer-backend/
+        name: ruff-format (backend)
+        language: system
+        entry: ai-customer-backend/.venv/Scripts/ruff.exe
+        args: [format, --check]
+        files: ^ai-customer-backend/.*\.py$
 
-  # ===== 前端 ESLint + Prettier =====
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.57.0
+  # ===== 前端 ESLint + Prettier（调用前端 node_modules 本地安装）=====
+  - repo: local
     hooks:
       - id: eslint
-        files: ^ai-customer-frontend/src/.*\.(ts|vue)$
+        name: eslint (frontend)
+        language: system
+        entry: ai-customer-frontend/node_modules/.bin/eslint
         args: [--fix]
-        additional_dependencies:
-          - eslint@8.57.0
-          - eslint-plugin-vue@9.25.0
-          - '@vue/eslint-config-typescript@13.0.0'
-          - '@vue/eslint-config-prettier@9.0.0'
-          - typescript@5.4.5
-
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.0
-    hooks:
+        files: ^ai-customer-frontend/src/.*\.(ts|vue)$
       - id: prettier
+        name: prettier (frontend)
+        language: system
+        entry: ai-customer-frontend/node_modules/.bin/prettier
+        args: [--write]
         files: ^ai-customer-frontend/src/.*\.(ts|vue|scss|css)$
 
   # ===== 通用安全与卫生检查 =====
