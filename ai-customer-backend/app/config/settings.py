@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     APP_PORT: int = 8000
     CORS_ALLOWED_ORIGINS: str = "*"
 
+    # 生产环境首次启动创建 admin 账号用的密码（仅显式设置时生效；
+    # 未设置且库中无 admin 时，生产环境不会自动创建任何账号）
+    INIT_ADMIN_PASSWORD: str = ""
+
     # ===== MySQL =====
     DB_TYPE: str = "mysql"  # mysql | sqlite
     MYSQL_HOST: str = "localhost"
@@ -177,6 +181,53 @@ class Settings(BaseSettings):
         if len(v) < 16:
             raise ValueError("JWT_SECRET_KEY 长度至少 16 个字符")
         return v
+
+    # ------------------------------------------------------------------ #
+    # 生产环境安全校验（B3 fail-fast）
+    # ------------------------------------------------------------------ #
+    @property
+    def is_production(self) -> bool:
+        """是否生产环境。"""
+        return self.APP_ENV == "production"
+
+    @property
+    def insecure_default_secrets(self) -> List[tuple]:
+        """返回仍在使用默认占位符/弱默认值的密钥配置列表。
+
+        生产环境此列表必须为空，否则启动即失败（fail-fast），
+        防止占位密钥（可被任何人从源码读到）被部署到线上。
+        """
+        checks = [
+            ("JWT_SECRET_KEY", self.JWT_SECRET_KEY),
+            ("CRYPTO_SECRET_KEY", self.CRYPTO_SECRET_KEY),
+            ("WEBHOOK_HMAC_SECRET", self.WEBHOOK_HMAC_SECRET),
+            ("OPENAI_COMPAT_API_KEY", self.OPENAI_COMPAT_API_KEY),
+            ("MINIO_ACCESS_KEY", self.MINIO_ACCESS_KEY),
+            ("MINIO_SECRET_KEY", self.MINIO_SECRET_KEY),
+        ]
+        insecure = [
+            (name, value)
+            for name, value in checks
+            if value.startswith("please-change-") or value == "minioadmin"
+        ]
+        return insecure
+
+
+def validate_production_security(s: "Settings") -> None:
+    """生产环境启动安全校验（fail-fast）：默认密钥必须替换为真实值。
+
+    非 production 环境直接放行；production 环境存在占位密钥时抛 RuntimeError
+    阻止应用启动（fail-closed 原则）。
+    """
+    if not s.is_production:
+        return
+    insecure = s.insecure_default_secrets
+    if insecure:
+        names = ", ".join(name for name, _ in insecure)
+        raise RuntimeError(
+            f"生产环境检测到未替换的默认密钥: {names}。"
+            f"请在环境变量或 .env 中设置真实密钥后重启。"
+        )
 
 
 @lru_cache(maxsize=1)

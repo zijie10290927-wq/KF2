@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 #   (2) ValueError: password cannot be longer than 72 bytes
 # bcrypt 生成的 $2b$ 前缀哈希与之前 passlib 输出 100% 互认。
 
-# 开发模式内置账号（DB 不可用时的降级方案；⚠️ 生产禁用）
+# 开发模式内置账号（DB 不可用时的降级方案；⚠️ 生产环境完全禁用，见 _dev_fallback_allowed）
 _DEV_BUILTIN_USERS: dict[str, dict] = {
     "admin": {
         "user_id": 1,
@@ -53,6 +53,15 @@ _DEV_BUILTIN_USERS: dict[str, dict] = {
         "password": "demo123",
     },
 }
+
+
+def _dev_fallback_allowed() -> bool:
+    """内置账号降级仅限非生产环境。
+
+    fail-closed：生产环境 DB 不可达时直接拒绝登录，
+    绝不允许用源码中可读的 admin/admin123 通过认证。
+    """
+    return settings.APP_ENV != "production"
 
 # Token 黑名单前缀
 _TOKEN_BLACKLIST_PREFIX = "token:blacklist:"
@@ -181,9 +190,9 @@ class AuthService:
             db_reachable = False
             logger.warning("DB unreachable in login, fallback to builtin users: %s", e)
 
-        # 2. DB 不可达或用户不存在 → 降级到内置账号（仅开发环境）
+        # 2. DB 不可达或用户不存在 → 降级到内置账号（仅非生产环境，见 _dev_fallback_allowed）
         if user_dict is None:
-            builtin = _DEV_BUILTIN_USERS.get(username)
+            builtin = _DEV_BUILTIN_USERS.get(username) if _dev_fallback_allowed() else None
             if builtin is None or builtin.get("password") != password:
                 raise AuthError("用户名或密码错误")
             if builtin.get("status", 1) != 1:
@@ -222,21 +231,23 @@ class AuthService:
     # 用户查询
     # ------------------------------------------------------------------ #
     async def get_user_by_id(self, user_id: int) -> Optional[User]:
-        """按 ID 查询用户。DB 可达时仅返回真实记录；DB 不可达时降级到内置账号。"""
+        """按 ID 查询用户。DB 可达时仅返回真实记录；DB 不可达时降级到内置账号（非生产环境）。"""
         try:
             stmt = select(User).where(User.id == user_id)
             result = await self.db.execute(stmt)
             return result.scalar_one_or_none()
         except Exception as e:
             logger.warning("DB unreachable get_user_by_id, fallback builtin: %s", e)
-            # DB 不可达时降级到内置账号
+            if not _dev_fallback_allowed():
+                return None
+            # DB 不可达时降级到内置账号（仅非生产环境）
             for b in _DEV_BUILTIN_USERS.values():
                 if b["user_id"] == user_id:
                     return _build_fake_user(b)
             return None
 
     async def get_user_by_username(self, username: str) -> Optional[User]:
-        """查询用户。DB 可达时仅返回真实记录；DB 不可达时降级到内置账号。"""
+        """查询用户。DB 可达时仅返回真实记录；DB 不可达时降级到内置账号（非生产环境）。"""
         try:
             stmt = select(User).where(User.username == username)
             result = await self.db.execute(stmt)
@@ -244,34 +255,86 @@ class AuthService:
             return db_user  # DB 可达：无论是否找到都直接返回（找到为 User，未找到为 None）
         except Exception as e:
             logger.warning("DB unreachable get_user_by_username, fallback builtin: %s", e)
-            # DB 不可达时降级到内置账号
+            if not _dev_fallback_allowed():
+                return None
+            # DB 不可达时降级到内置账号（仅非生产环境）
             b = _DEV_BUILTIN_USERS.get(username)
             if b is not None:
                 return _build_fake_user(b)
             return None
 
     async def register(self, username: str, password: str, role: str = "user") -> User:
-        """注册新用户。
+        """注册新用户（公开匿名端点专用）。
 
         安全约束：注册接口为匿名端点（JWT 白名单），服务端强制 role="user"，
         忽略客户端传入的任何角色值，防止匿名自提权为管理员。
-        管理员账号只能通过启动时的内置账号或已有管理员创建。
+        管理员账号只能通过启动初始化（init_default_accounts）创建。
         """
         if role and role != "user":
             logger.warning("Register attempt with non-user role=%r — forced to 'user'", role)
+        return await self.create_user(username, password, role="user")
+
+    async def create_user(self, username: str, password: str, role: str = "user") -> User:
+        """内部建号接口（启动初始化/管理端使用），可显式指定角色。
+
+        ⚠️ 仅供服务端内部调用，严禁挂接到任何匿名可达的路由。
+        """
         existing = await self.get_user_by_username(username)
         if existing is not None:
             raise AuthError("用户名已存在")
         user = User(
             username=username,
             password_hash=self.hash_password(password),
-            role="user",
+            role=role,
             status=1,
         )
         self.db.add(user)
         await self.db.commit()
         await self.db.refresh(user)
         return user
+
+
+async def init_default_accounts(db: AsyncSession) -> None:
+    """启动时初始化默认账号（幂等，从 main.py lifespan 调用）。
+
+    环境策略（B2 修复）：
+    - development/test: 创建 admin/admin123 与 demo/demo123（开发便利）
+    - production:
+      * 仅当 INIT_ADMIN_PASSWORD 显式设置时创建 admin（使用该密码，角色 admin）
+      * 未设置且库中无 admin → 跳过创建（绝不使用默认弱口令）
+      * 已存在 admin 且密码仍为弱口令 admin123 → 抛 RuntimeError 阻止启动（fail-closed）
+    """
+    svc = AuthService(db)
+    is_prod = settings.is_production
+
+    admin = await svc.get_user_by_username("admin")
+    if admin is None:
+        if is_prod:
+            if settings.INIT_ADMIN_PASSWORD:
+                await svc.create_user("admin", settings.INIT_ADMIN_PASSWORD, role="admin")
+                logger.info("Admin account created from INIT_ADMIN_PASSWORD (random password)")
+            else:
+                logger.warning(
+                    "Production: no admin account and INIT_ADMIN_PASSWORD unset — skip admin creation"
+                )
+        else:
+            await svc.create_user("admin", "admin123", role="admin")
+            logger.info("Dev default admin created: admin/admin123 (dev/test only)")
+    else:
+        if is_prod and admin.password_hash and AuthService.verify_password(
+            "admin123", admin.password_hash
+        ):
+            raise RuntimeError(
+                "生产环境 admin 账号仍在使用默认弱口令 admin123，"
+                "请立即修改密码后重启（fail-closed）。"
+            )
+        logger.info("Admin account exists, skip init")
+
+    if not is_prod:
+        demo = await svc.get_user_by_username("demo")
+        if demo is None:
+            await svc.create_user("demo", "demo123", role="user")
+            logger.info("Demo user account created: demo/demo123 (dev/test only)")
 
 
 def _build_fake_user(b: dict):  # type: ignore[no-untyped-def]  # 返回鸭子类型对象

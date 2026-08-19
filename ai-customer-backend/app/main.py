@@ -15,7 +15,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config.settings import settings
+from app.config.settings import settings, validate_production_security
 from app.config.database import async_engine, Base
 from app.config.milvus import milvus_client
 from app.config.minio import minio_client
@@ -55,6 +55,10 @@ async def lifespan(app: FastAPI):
     """应用生命周期：启动时初始化资源，关闭时释放。"""
     logger.info("==== Starting AI Customer Agent (env=%s) ====", settings.APP_ENV)
 
+    # 0. 生产环境安全校验（fail-fast）：默认密钥占位符必须替换（B3）
+    #    非 production 环境直接放行；失败抛 RuntimeError 阻止启动。
+    validate_production_security(settings)
+
     # 1. Redis 连通性检查（非阻塞，失败仅告警）
     redis_ok = await ping_redis()
     logger.info("Redis ping: %s", "OK" if redis_ok else "FAILED (will degrade)")
@@ -83,24 +87,17 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("DB create_all failed (use alembic migrate): %s", e)
 
-    # 5. 初始化默认 admin 账号（幂等：仅当不存在时创建）
-    #    默认账号: admin / admin123   (⚠️ 生产环境务必修改或禁用)
+    # 5. 初始化默认账号（幂等；策略见 init_default_accounts 文档字符串，B2 修复）
+    #    - development/test: admin/admin123 + demo/demo123（开发便利）
+    #    - production: 仅 INIT_ADMIN_PASSWORD 显式设置时创建 admin；
+    #      已存在弱口令 admin123 → RuntimeError 阻止启动（fail-closed，不吞掉）
     try:
         from app.config.database import AsyncSessionLocal
-        from app.services.auth_service import AuthService
+        from app.services.auth_service import init_default_accounts
         async with AsyncSessionLocal() as init_db:
-            init_auth = AuthService(init_db)
-            exists = await init_auth.get_user_by_username("admin")
-            if exists is None:
-                await init_auth.register("admin", "admin123", role="admin")
-                logger.info("Default admin account created: admin / admin123 (⚠️ CHANGE IN PROD)")
-            else:
-                logger.info("Admin account exists, skip init")
-            # 同时创建一个普通用户用于 C 端演示
-            demo_exists = await init_auth.get_user_by_username("demo")
-            if demo_exists is None:
-                await init_auth.register("demo", "demo123", role="user")
-                logger.info("Demo user account created: demo / demo123")
+            await init_default_accounts(init_db)
+    except RuntimeError:
+        raise
     except Exception as e:
         logger.warning("Init default users failed (DB unavailable?): %s", e)
 

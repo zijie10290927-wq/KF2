@@ -35,6 +35,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["T20", "S106", "S107"]  # 运维脚本允许 print 与硬编码测试口令
 "app/adapters/widget/static/*" = []     # 静态 JS 资源不做 Python 检查
+"tests/*" = ["S105", "S106", "S107"]    # 测试夹具中的占位密钥/弱口令是有意为之
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
