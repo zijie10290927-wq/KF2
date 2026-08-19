@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全面代码审查报告 — AI智能客服系统</title>
+<style>
+  :root {
+    --bg: #0d1117; --bg-card: #161b22; --bg-hover: #1c2128; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e; --text-dim: #6e7681;
+    --accent: #58a6ff; --accent-dim: #1f6feb;
+    --red: #f85149; --red-bg: rgba(248, 81, 73, 0.1);
+    --yellow: #d29922; --yellow-bg: rgba(187, 128, 9, 0.15);
+    --green: #3fb950; --green-bg: rgba(63, 185, 80, 0.1);
+    --purple: #bc8cff; --purple-bg: rgba(188, 140, 255, 0.1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; font-size: 15px; }
+  .container { max-width: 1020px; margin: 0 auto; padding: 40px 24px 80px; }
+  .header { text-align: center; padding: 44px 0 36px; border-bottom: 1px solid var(--border); margin-bottom: 36px; }
+  .header h1 { font-size: 26px; margin-bottom: 8px; }
+  .header .subtitle { color: var(--text-muted); font-size: 14px; }
+  .header .meta { display: flex; justify-content: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+  .header .meta span { font-size: 12px; color: var(--text-dim); background: var(--bg-card); padding: 3px 12px; border-radius: 14px; border: 1px solid var(--border); }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 36px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px; text-align: center; }
+  .stat-card .num { font-size: 32px; font-weight: 700; }
+  .stat-card .label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .num-red { color: var(--red); } .num-yellow { color: var(--yellow); } .num-green { color: var(--green); } .num-purple { color: var(--purple); } .num-blue { color: var(--accent); }
+
+  .section { margin-bottom: 44px; }
+  .section-title { font-size: 20px; font-weight: 700; margin-bottom: 18px; padding-bottom: 8px; border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .sub-title { font-size: 16px; font-weight: 600; color: var(--accent); margin: 24px 0 12px; }
+
+  .issue { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 18px 22px; margin-bottom: 14px; }
+  .issue:hover { background: var(--bg-hover); }
+  .issue-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .issue-id { font-weight: 700; font-size: 14px; color: var(--text); }
+  .loc { font-family: Consolas, monospace; font-size: 12px; color: var(--text-muted); background: rgba(110,118,129,0.12); padding: 2px 8px; border-radius: 4px; }
+  .fixed-tag { font-size: 11px; font-weight: 600; color: var(--green); background: var(--green-bg); border: 1px solid rgba(63,185,80,0.3); padding: 1px 8px; border-radius: 10px; }
+  .issue p { color: var(--text-muted); font-size: 14px; margin-bottom: 6px; }
+  .issue .fix { font-size: 13px; color: var(--green); background: var(--green-bg); padding: 8px 12px; border-radius: 6px; margin-top: 8px; }
+  .badge { display: inline-flex; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 4px; }
+  .b-red { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+  .b-yellow { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(187,128,9,0.3); }
+  .b-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(188,140,255,0.2); }
+  .b-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(63,185,80,0.2); }
+  code { font-family: Consolas, monospace; font-size: 12.5px; background: rgba(110,118,129,0.15); padding: 1px 6px; border-radius: 4px; color: var(--accent); }
+
+  .alert { border-left: 4px solid; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 14px 0; font-size: 14px; }
+  .alert-red { border-color: var(--red); background: var(--red-bg); }
+  .alert-green { border-color: var(--green); background: var(--green-bg); }
+  .alert-blue { border-color: var(--accent); background: rgba(88,166,255,0.08); }
+
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13.5px; }
+  th { text-align: left; padding: 9px 12px; background: var(--bg-hover); color: var(--text-muted); font-size: 12.5px; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+
+  .footer { text-align: center; padding-top: 36px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>全面代码审查报告</h1>
+    <p class="subtitle">AI智能客服系统 · FastAPI 后端 + Vue3 前端 全栈深度审查</p>
+    <div class="meta">
+      <span>审查日期: 2026-08-19</span>
+      <span>审查方式: 人工逐文件 + 静态分析（Ruff）+ 双通道系统审查</span>
+      <span>覆盖: 后端 40+ 文件 / 前端 30+ 文件</span>
+    </div>
+  </div>
+
+  <!-- ===== 总览 ===== -->
+  <div class="stats">
+    <div class="stat-card"><div class="num num-red">7</div><div class="label">🔴 Blocker</div></div>
+    <div class="stat-card"><div class="num num-yellow">32</div><div class="label">🟡 Suggestion</div></div>
+    <div class="stat-card"><div class="num num-purple">24</div><div class="label">💭 Nit</div></div>
+    <div class="stat-card"><div class="num num-green">23</div><div class="label">✅ 优秀实践</div></div>
+    <div class="stat-card"><div class="num num-blue">2</div><div class="label">🔧 已当场修复</div></div>
+  </div>
+
+  <div class="alert alert-green">
+    <strong>本次审查当场修复（已提交 Git）：</strong>
+    ① 13 处异常信息泄露 → 客户端统一通用消息 + 日志记录详情（commit fba5c27）；
+    ② 注册接口匿名提权漏洞 B1（commit 5aded41）。
+    其余问题按本报告排期修复。
+  </div>
+
+  <!-- ===== Blocker ===== -->
+  <div class="section">
+    <div class="section-title">🔴 一、Blocker 级问题（必须修复）</div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <span class="badge b-red">🔴 已修复</span>
+        <span class="issue-id">B1 注册接口匿名提权为管理员</span>
+        <span class="loc">schemas/auth.py:21 · services/auth_service.py:253</span>
+        <span class="fixed-tag">✔ commit 5aded41</span>
+      </div>
+      <p><code>/auth/register</code> 在 JWT 白名单中（匿名可访问），而 <code>RegisterRequest.role</code> 允许传 <code>admin</code>，服务端无条件接受 → 任何人可注册管理员账号，控制知识库、渠道密钥、用户管理等全部管理功能。</p>
+      <div class="fix">修复：Schema pattern 收紧为 <code>^user$</code> + 服务端强制 <code>role="user"</code>（双重防线），新增 6 个回归测试。</div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <span class="badge b-red">🔴 Blocker</span>
+        <span class="issue-id">B2 内置 admin/demo 账号 = 永久后门</span>
+        <span class="loc">main.py:87-105 · auth_service.py:40-55,186 · deps.py:116-134</span>
+      </div>
+      <p>lifespan 无条件创建 <code>admin/admin123</code>（生产环境也创建）；login 在「DB 不可达 <strong>或查无此用户</strong>」时都降级匹配内置账号 → 即使删掉 DB 里的 admin 行，<code>admin/admin123</code> 仍永远可登录。</p>
+      <div class="fix">建议：<code>APP_ENV=production</code> 时禁止创建默认账号、禁止内置降级；降级条件收紧为「仅 DB 明确不可达」。</div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <span class="badge b-red">🔴 Blocker</span>
+        <span class="issue-id">B3 全部默认密钥为公开占位符，无生产强制校验</span>
+        <span class="loc">config/settings.py:66,71,92,96</span>
+      </div>
+      <p><code>JWT_SECRET_KEY</code>、<code>CRYPTO_SECRET_KEY</code>、<code>WEBHOOK_HMAC_SECRET</code>、<code>OPENAI_COMPAT_API_KEY</code> 默认值均为公开已知字符串。生产忘改 → JWT 可被伪造（叠加 B2 直接拿到 admin）、Webhook 可伪造（叠加 B4 形成 SSRF）。</p>
+      <div class="fix">建议：lifespan 启动时检测 <code>APP_ENV=production</code> 且密钥仍为占位值 → <strong>启动失败（fail-fast）</strong>并打印缺失清单。</div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <span class="badge b-red">🔴 Blocker</span>
+        <span class="issue-id">B4 GenericAdapter 回调地址 SSRF</span>
+        <span class="loc">adapters/platforms/generic_adapter.py:136-180</span>
+      </div>
+      <p><code>callback_url</code> 完全由请求方控制（来自 webhook metadata），服务端直接 POST 任意 URL。配合 B3（默认 HMAC 密钥公开可伪造签名），攻击者可让服务器扫描内网（<code>127.0.0.1</code>、<code>169.254.169.254</code> 云元数据、内网段）或对第三方系统发起恶意回调。</p>
+      <div class="fix">建议：校验 scheme ∈ {http,https}、host 非保留 IP/内网段；或域名白名单。</div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <span class="badge b-red">🔴 Blocker</span>
+        <span class="issue-id">B5 切换/删除会话时未中止进行中的 SSE 流（竞态）</span>
+        <span class="loc">stores/chat.ts:39-57,124-130</span>
+      </div>
+      <p><code>selectSession</code>/<code>createSession</code>/<code>deleteSession</code> 均未调用 <code>stopStreaming()</code>。流式输出中切换会话：旧流持续向孤儿对象写入（内存/带宽浪费）、<code>isStreaming</code> 保持 true 导致新会话<strong>无法发消息且无提示</strong>、切回旧会话时未持久化的临时消息丢失。</p>
+      <div class="fix">建议：三处开头调用 <code>stopStreaming()</code>；更稳妥——<code>sendMessage</code> 捕获 sessionId，回调中校验 <code>currentSessionId === sessionId</code> 再写入；<code>ChatView onUnmounted</code> 中 abort。</div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <span class="badge b-red">🔴 Blocker</span>
+        <span class="issue-id">B6 渠道/模型配置编辑保存会清空已有密钥</span>
+        <span class="loc">ChannelManagement.vue:435-457 · ModelConfig.vue:135-152</span>
+      </div>
+      <p>UI 提示「留空则不修改」，但前端打开编辑框即把 <code>api_token/webhook_secret/app_key</code> 置空，随后<strong>无条件整体提交</strong> → 后端按值更新，线上密钥被清空。</p>
+      <div class="fix">建议：提交前剔除空字符串字段（<code>Object.fromEntries(Object.entries(form).filter(([,v]) => v !== ''))</code>）。</div>
+    </div>
+
+    <div class="issue">
+      <div class="issue-head">
+        <span class="badge b-red">🔴 Blocker</span>
+        <span class="issue-id">B7 fallback 字段绕过类型系统（as any 穿透 3 个文件）</span>
+        <span class="loc">stores/chat.ts:105 · AssistantMessage.vue:17 · types/index.ts:36-46</span>
+      </div>
+      <p><code>ChatMessage</code> 接口缺少 <code>fallback</code> 字段，导致 <code>(aiMsg as any).fallback</code> 跨 3 个文件传递。字段形状变化时类型系统完全无法兜底，静默 undefined。</p>
+      <div class="fix">建议：接口增加 <code>fallback?: FallbackData | null</code>，删除全部相关 <code>as any</code>。</div>
+    </div>
+  </div>
+
+  <!-- ===== 后端 Suggestion ===== -->
+  <div class="section">
+    <div class="section-title">🟡 二、后端 Suggestion 级问题（21 项）</div>
+
+    <div class="sub-title">正确性与数据一致性</div>
+    <table>
+      <tr><th style="width:60px;">编号</th><th style="width:32%;">问题</th><th>位置与说明</th></tr>
+      <tr><td>S1</td><td>OpenAI 兼容流式路径 DB 会话提前关闭</td><td><code>openai_compat.py:82,176-220</code> — 返回 StreamingResponse 后 finally 立即 close，流开始时 session 已关 → <strong>流式渠道消息不落 MySQL</strong>、混合检索静默降级（表面能用）。建议 close 放入生成器 try/finally。</td></tr>
+      <tr><td>S9</td><td>Embedding 一次失败永久 mock</td><td><code>rag_service.py:111,133</code> — <code>_force_mock=True</code> 一次性置位后永不重试真实 API，检索质量断崖。建议失败退避（60s 后重试）。</td></tr>
+      <tr><td>S10</td><td>Milvus 入库与 MySQL 提交非原子</td><td><code>knowledge_service.py:252-274</code> — 先写 Milvus 再 commit MySQL，后者失败 → 向量残留孤儿数据。建议 MySQL 先行、Milvus 记录幂等 key + 补偿。</td></tr>
+      <tr><td>S19</td><td>SQLite 下 bulk delete 无 FK 级联</td><td><code>routers/chat.py:192</code> + <code>database.py</code> — SQLite 未开 <code>PRAGMA foreign_keys=ON</code>，删除会话残留孤儿消息。connect 事件补一行 PRAGMA 即可。</td></tr>
+      <tr><td>S20</td><td>MinIO 降级后永不恢复</td><td><code>config/minio.py:46-60</code> — <code>_degraded</code> 置位后即使 MinIO 恢复也不切换，本地/远端数据分叉。建议定时探测。</td></tr>
+      <tr><td>S21</td><td>session_mapper 并发兜底脆弱</td><td><code>session_mapper.py:135-150</code> — 回滚会丢弃调用方未提交变更；极端时序重查 None 直接 raise 500 且消息丢失。建议加显式重试。</td></tr>
+    </table>
+
+    <div class="sub-title">安全加固</div>
+    <table>
+      <tr><th style="width:60px;">编号</th><th style="width:32%;">问题</th><th>位置与说明</th></tr>
+      <tr><td>S2</td><td>文件上传先全量进内存再校验大小</td><td><code>admin_knowledge.py:57-61</code> — <code>await file.read()</code> 在大小校验之前，2GB 上传可 OOM。改为 <code>read(MAX+1)</code> 或先查 Content-Length。</td></tr>
+      <tr><td>S4</td><td>LLM Prompt 用户输入注入</td><td><code>intent_service.py:162-183</code>、<code>rag_service.py:348-352</code> — 用户消息直接拼入 prompt，可注入「忽略指令」类攻击操控分类。建议加不可信数据分隔符 + 输出严格校验。</td></tr>
+      <tr><td>S5</td><td>DB 查无用户也降级内置账号</td><td><code>deps.py:116-134</code> — 放大 B2/B3 风险。降级仅限 development。</td></tr>
+      <tr><td>S11</td><td>Widget 无 app_key 全放行 + 内存 dict 可灌爆</td><td><code>widget_server.py:45-50,236-240</code> — 默认配置即全放行；session dict 无 TTL 可被填充。生产 fail-closed。</td></tr>
+      <tr><td>S12</td><td>Widget 嵌入页对话链路断裂</td><td><code>widget_server.py:147-165</code> — 页面 JS 调 <code>/chat/stream</code> 不带 JWT → 必然 401，widget 流程默认配置不可用。需专属 widget 对话端点。</td></tr>
+      <tr><td>S13</td><td>CORS <code>*</code> + allow_credentials</td><td><code>main.py:137-144</code> — 当前 Bearer 模式风险有限，引入 cookie 会话即高危。生产显式配置域名。</td></tr>
+      <tr><td>S15</td><td>三处鉴权「未配置即放行」</td><td>generic/zhibo adapter、openai_compat — secret 未配 → 跳过鉴权。生产必须拒绝（fail-closed）。</td></tr>
+      <tr><td>S17</td><td>健康检查暴露内部环境指纹</td><td><code>main.py:166-174</code> — /health 无鉴权返回 env/version/组件状态。仅返回 status ok。</td></tr>
+    </table>
+
+    <div class="sub-title">性能与健壮性</div>
+    <table>
+      <tr><th style="width:60px;">编号</th><th style="width:32%;">问题</th><th>位置与说明</th></tr>
+      <tr><td>S3</td><td>chunk_size/overlap 无上下界</td><td><code>admin_knowledge.py:38-39</code> — 可传 0/负数/10⁹。Form 加 <code>ge/le</code>。</td></tr>
+      <tr><td>S6</td><td>list_models 缓存是死代码</td><td><code>config_service.py:143-154</code> — 读缓存后未使用；真正高频的 get_default_model 反而无缓存。</td></tr>
+      <tr><td>S7</td><td>Milvus/MinIO 同步调用阻塞事件循环</td><td><code>milvus.py:234-240</code>、<code>minio.py:160-188</code> — 同步 SDK 直接在 async 中执行，阻塞全部并发请求。用 <code>asyncio.to_thread</code> 包裹。</td></tr>
+      <tr><td>S8</td><td>LIKE '%kw%' 全表扫描 + 通配符未转义</td><td><code>rag_service.py:269-308</code> — 知识库增长后检索变慢；用户输入 <code>%/_</code> 扭曲匹配。转义 + 全文索引。</td></tr>
+      <tr><td>S14</td><td>list_users 分页参数无约束</td><td><code>admin_users.py:65-66</code> — <code>page_size=10⁹</code> 超大查询。加 Query(ge/le)（其他接口均有，此处漏网）。</td></tr>
+      <tr><td>S16</td><td>会话日志全量返回无上限</td><td><code>admin_chat_logs.py:103-109</code> — 超长会话 MB 级响应。加 limit/分页。</td></tr>
+      <tr><td>S18</td><td>模型参数无范围校验</td><td><code>admin_config.py:89-92</code> — temperature 无 0~2、max_tokens 无上限约束，异常值透传上游。</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== 前端 Suggestion ===== -->
+  <div class="section">
+    <div class="section-title">🟡 三、前端 Suggestion 级问题（11 项）</div>
+    <table>
+      <tr><th style="width:60px;">编号</th><th style="width:32%;">问题</th><th>位置与说明</th></tr>
+      <tr><td>F4</td><td>any 类型滥用（6 处 as any + 5 处 catch(e:any)）</td><td><code>chat.ts:43</code>、<code>ChannelManagement.vue:504-528</code>、<code>ChatView.vue:74/83</code> 等 — ESLint 配置了 <code>no-explicit-any: error</code> 但存量代码违反，lint 门禁形同虚设。</td></tr>
+      <tr><td>F5</td><td>Markdown 渲染缺 DOMPurify 纵深防御</td><td><code>markdown.ts:5-10</code> — <code>html:false</code> 主防线正确✔，但模型输出直接进 v-html 无二次 sanitize。低成本高收益。</td></tr>
+      <tr><td>F6</td><td>setTimeout 未清理</td><td><code>KnowledgeManage.vue:113,134</code> — 组件卸载后定时器仍触发 loadDocs，连续上传叠加并发请求。</td></tr>
+      <tr><td>F7</td><td>多个 async 处理器无 try/catch</td><td><code>ModelConfig.vue:165-180</code>、<code>UserManage.vue:93-105</code> — unhandled rejection + 列表状态不回滚。</td></tr>
+      <tr><td>F8</td><td>滚动 watch 每 token 全量 map+join</td><td><code>MessageList.vue:31-40</code> — O(n) 重复计算。只监听最后一条消息 content。</td></tr>
+      <tr><td>F9</td><td>tmp id 替换导致组件重挂载</td><td><code>chat.ts:107-109</code> — done 时 tmp id → 真实 id，v-for key 变化 → AssistantMessage 整体重建、视图抖动。</td></tr>
+      <tr><td>F10</td><td>Login redirect 参数未校验</td><td><code>Login.vue:84</code> — 校验站内路径（<code>startsWith('/') && !startsWith('//')</code>）。</td></tr>
+      <tr><td>F11</td><td>两页面绕过 API 层硬编码 URL</td><td><code>ChatLogs.vue:42</code>、<code>UserManage.vue:66</code> — 直接 import request，违反分层约定。</td></tr>
+      <tr><td>F12</td><td>路由守卫 fetchMe 可并发重复调用</td><td><code>router/index.ts:87-89</code> — 无 in-flight 去重，快速导航发多个 /auth/me。</td></tr>
+      <tr><td>F13</td><td>FallbackCard 空对象伪造数据 + onCall 占位</td><td><code>FallbackCard.vue:22-26</code> — 转人工 reason 丢失。</td></tr>
+      <tr><td>F14</td><td>缺加载态/空态</td><td><code>ChatView.vue:68-78</code>、<code>Dashboard.vue:41-46</code>（统计值硬编码 '-'）。</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== Nit ===== -->
+  <div class="section">
+    <div class="section-title">💭 四、Nit 级问题（摘要，24 项）</div>
+    <table>
+      <tr><th style="width:90px;">类别</th><th>代表性问题</th></tr>
+      <tr><td>后端·死代码</td><td>document_parser.py latin-1 解码后 utf-8 分支永不可达；vite.config 读 process.env 而非 .env 文件（前端）</td></tr>
+      <tr><td>后端·配置</td><td>MySQL 密码未 URL 编码（含 @/: 时连接串损坏）；RATE_LIMIT_MAX 默认值 settings(600) 与 .env.example(30) 不一致</td></tr>
+      <tr><td>后端·语义</td><td>list_webhook_logs 用 channel_sessions 冒充日志表；掩码判断 startswith("***") 可误判；platform 路径参数无白名单写入 KV</td></tr>
+      <tr><td>后端·资源</td><td>认证路径每请求开两个 DB 连接（中间件+依赖各一）；SSE 长流持有连接整段时长</td></tr>
+      <tr><td>前端·依赖</td><td>Tailwind 已配置完全未使用（死依赖）；favicon 404；全量图标注册与显式 import 并存</td></tr>
+      <tr><td>前端·体验</td><td>代码高亮主题 CSS 未引入（无语法着色）；user-scalable=no 可访问性问题；会话删除功能 UI 不可达（半成品）；onError 错误文本混入消息内容无 isError 标记</td></tr>
+      <tr><td>其他</td><td>跨表重名索引 idx_session_id（MySQL 无碍/SQLite 冲突，测试已规避并记录）；ApiResponse&lt;T=any&gt; 默认泛型弱化约束</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== 优秀实践 ===== -->
+  <div class="section">
+    <div class="section-title">✅ 五、优秀实践（23 项，值得保持）</div>
+    <div class="two-col" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="issue" style="margin-bottom:0;">
+        <p><strong style="color:var(--green);">后端</strong></p>
+        <p>① SQL 全参数化（零注入）② API Key Fernet 加密 + 输出掩码 ③ <code>hmac.compare_digest</code> 防时序攻击 + 时间戳防重放 ④ 后台任务独立 Session（注释明确）⑤ 资源释放规范（try/finally）⑥ 多层优雅降级全覆盖 ⑦ 服务端 UUID 对象名防路径穿越 ⑧ <code>_ensure_session_owner</code> 越权防护 ⑨ SQLite WAL 调优 ⑩ 配置缓存主动失效 ⑪ .env.example 干净无真实密钥 ⑫ deps.py 依赖注入组织清晰</p>
+      </div>
+      <div class="issue" style="margin-bottom:0;">
+        <p><strong style="color:var(--green);">前端</strong></p>
+        <p>① XSS 主防线正确（markdown <code>html:false</code> + 仅一处 v-html）② SSE 实现务实（XHR 增量解析 + 5s 兜底 + 注释详尽）③ 竞态防护意识（isStreaming 互斥 + AbortSignal）④ 乐观 UI（预插入消息流式追加）⑤ ApiResponse 泛型全链路传递 ⑥ 组件拆分职责单一 ⑦ .env 无密钥 + 密码框 show-password ⑧ 删除操作 popconfirm 确认 ⑨ tsconfig strict + vue-tsc 门禁 ⑩ format.ts 纯函数带类型守卫 ⑪ SCSS 变量集中管理</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 修复路线图 ===== -->
+  <div class="section">
+    <div class="section-title">🗓 六、修复路线图（建议排期）</div>
+    <table>
+      <tr><th style="width:110px;">优先级</th><th style="width:60px;">编号</th><th>修复动作</th><th style="width:120px;">预估工作量</th></tr>
+      <tr><td><span class="badge b-green">已完成</span></td><td>B1 + 泄露×13</td><td>注册提权 + 异常信息泄露（已提交 commit fba5c27 / 5aded41）</td><td>—</td></tr>
+      <tr><td><span class="badge b-red">本周必做</span></td><td>B2 + B3</td><td>生产环境 fail-fast：禁默认账号/禁内置降级/密钥占位检测启动失败</td><td>半天</td></tr>
+      <tr><td><span class="badge b-red">本周必做</span></td><td>B4 + S15</td><td>SSRF 防护：callback_url 校验 + 三处「未配置即放行」改 fail-closed</td><td>半天</td></tr>
+      <tr><td><span class="badge b-red">本周必做</span></td><td>B5</td><td>前端 SSE 竞态：三处 stopStreaming + sessionId 校验守卫</td><td>2 小时</td></tr>
+      <tr><td><span class="badge b-red">本周必做</span></td><td>B6</td><td>配置编辑剔除空字段，防密钥清空</td><td>1 小时</td></tr>
+      <tr><td><span class="badge b-yellow">下周</span></td><td>S1</td><td>OpenAI 兼容流式 DB 会话生命周期修复（数据丢失）</td><td>2 小时</td></tr>
+      <tr><td><span class="badge b-yellow">下周</span></td><td>B7 + F4</td><td>fallback 入类型系统 + 清除全部 any（让 lint 门禁生效）</td><td>半天</td></tr>
+      <tr><td><span class="badge b-yellow">下周</span></td><td>S2 + S3 + S14 + S18</td><td>输入校验批处理：上传边读边限 / 参数边界 / 分页约束</td><td>半天</td></tr>
+      <tr><td><span class="badge b-yellow">两周内</span></td><td>S7 + S8</td><td>性能：同步 SDK 包 to_thread / LIKE 转义 + 全文索引评估</td><td>1 天</td></tr>
+      <tr><td><span class="badge b-yellow">两周内</span></td><td>S9 + S20 + F5</td><td>降级恢复机制 + DOMPurify 纵深防御</td><td>半天</td></tr>
+      <tr><td><span class="badge b-purple">排期</span></td><td>S4 + S12</td><td>Prompt 注入防护 / Widget 对话端点</td><td>1 天</td></tr>
+      <tr><td><span class="badge b-purple">排期</span></td><td>Nit 批量</td><td>死代码清理 / 死依赖移除 / Nit 修复（可搭车做）</td><td>见缝插针</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== 基础设施成果 ===== -->
+  <div class="section">
+    <div class="section-title">🛠 七、本次审查同期落地的基础设施</div>
+    <table>
+      <tr><th>项目</th><th>状态</th></tr>
+      <tr><td>Git 仓库 + .gitignore（密钥/运行时数据排除）</td><td>✔ 已初始化，5 个 commit</td></tr>
+      <tr><td>Ruff（后端 lint + format，pyproject.toml）</td><td>✔ 已配置并运行（基线 323 项，主要 Optional 现代化）</td></tr>
+      <tr><td>ESLint + Prettier（前端，.eslintrc.cjs + .prettierrc）</td><td>✔ 已配置（存量 any 违规待清，见 F4）</td></tr>
+      <tr><td>pre-commit（ruff/eslint/prettier/私钥检测/大文件）</td><td>✔ .pre-commit-config.yaml（需 <code>pip install pre-commit && pre-commit install</code> 激活）</td></tr>
+      <tr><td>PR 模板（7 项自检清单）</td><td>✔ .github/pull_request_template.md</td></tr>
+      <tr><td>pytest 测试体系（51 用例全通过）</td><td>✔ 6 个测试文件，含 3 个安全回归测试</td></tr>
+    </table>
+  </div>
+
+  <div class="footer">
+    <p>全面代码审查报告 v1.0 · AI智能客服系统 · 2026-08-19</p>
+    <p>审查依据：《代码审查标准与流程规范》| 工具：人工审查 + Ruff 0.16 + pytest 回归</p>
+  </div>
+
+</div>
+</body>
+</html>
