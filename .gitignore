@@ -1,0 +1,53 @@
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# ===== Node =====
+node_modules/
+dist/
+*.local
+
+# ===== 环境配置（含密钥，严禁入库）=====
+.env
+.env.local
+.env.*.local
+
+# ===== 运行时数据 =====
+data/
+*.db
+*.sqlite
+*.sqlite3
+dogfood-output/
+artifacts/
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== 测试产物 =====
+api-test-results.json
+api-test-temp.json
+login_resp.json
+test-results/
+playwright-report/
+
+# ===== IDE =====
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# ===== AI 辅助记忆（本地缓存，不入库）=====
+.workbuddy/
+
+# ===== 临时截图 =====
+*.png.tmp

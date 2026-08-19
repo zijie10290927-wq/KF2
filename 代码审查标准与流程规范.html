@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代码审查标准与流程规范 — AI智能客服系统</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-card: #161b22;
+    --bg-hover: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --text-dim: #6e7681;
+    --accent: #58a6ff;
+    --accent-dim: #1f6feb;
+    --red: #f85149;
+    --red-bg: rgba(248, 81, 73, 0.1);
+    --yellow: #d29922;
+    --yellow-bg: rgba(187, 128, 9, 0.15);
+    --green: #3fb950;
+    --green-bg: rgba(63, 185, 80, 0.1);
+    --purple: #bc8cff;
+    --purple-bg: rgba(188, 140, 255, 0.1);
+    --orange: #db6d28;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+  .container { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 48px 0 40px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .header .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .header .meta {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .header .meta span {
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--bg-card);
+    padding: 4px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+
+  /* Section */
+  .section { margin-bottom: 48px; }
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .icon { font-size: 26px; }
+  .subsection-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 28px 0 14px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card:hover { background: var(--bg-hover); }
+
+  /* Priority badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 4px;
+    vertical-align: middle;
+  }
+  .badge-blocker { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+  .badge-suggest { background: var(--yellow-bg); color: var(--yellow); border: 1px solid rgba(187,128,9,0.3); }
+  .badge-nit { background: var(--purple-bg); color: var(--purple); border: 1px solid rgba(188,140,255,0.2); }
+  .badge-good { background: var(--green-bg); color: var(--green); border: 1px solid rgba(63,185,80,0.2); }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-hover); }
+
+  /* Code blocks */
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 13px;
+    background: rgba(110, 118, 129, 0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+  pre {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 12px 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+
+  /* Process flow */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 20px 0;
+  }
+  .flow-step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    position: relative;
+    padding-bottom: 28px;
+  }
+  .flow-step:last-child { padding-bottom: 0; }
+  .flow-step::before {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 40px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .flow-step:last-child::before { display: none; }
+  .flow-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+    z-index: 1;
+  }
+  .flow-content h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .flow-content p {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* Alert boxes */
+  .alert {
+    border-left: 4px solid;
+    padding: 14px 18px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .alert-red { border-color: var(--red); background: var(--red-bg); }
+  .alert-yellow { border-color: var(--yellow); background: var(--yellow-bg); }
+  .alert-green { border-color: var(--green); background: var(--green-bg); }
+  .alert-blue { border-color: var(--accent); background: rgba(88,166,255,0.08); }
+  .alert strong { color: var(--text); }
+
+  /* Checklist */
+  .checklist {
+    list-style: none;
+    padding: 0;
+  }
+  .checklist li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist .check-icon {
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* Comment format example */
+  .comment-example {
+    background: #010409;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .comment-example .comment-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .comment-example .comment-body {
+    color: var(--text-muted);
+    padding-left: 4px;
+  }
+  .comment-example .comment-suggestion {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(110, 118, 129, 0.08);
+    border-radius: 6px;
+  }
+
+  /* Two column */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ===== Header ===== -->
+  <div class="header">
+    <h1>代码审查标准与流程规范</h1>
+    <p class="subtitle">AI智能客服系统 · FastAPI + Vue3 全栈项目</p>
+    <div class="meta">
+      <span>版本 1.0</span>
+      <span>适用范围: ai-customer-backend / ai-customer-frontend</span>
+      <span>技术栈: Python 3.13 · Vue 3.4 · TypeScript 5.4</span>
+    </div>
+  </div>
+
+  <!-- ===== 第一章 审查哲学 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🎯</span>一、审查哲学与原则</div>
+
+    <div class="card">
+      <p><strong>代码审查不是找茬，是教学与成长。</strong> 每一条审查意见都应该让提交者和审查者双方都学到东西。</p>
+      <div style="margin-top: 16px;">
+        <table>
+          <tr><th style="width:30%;">原则</th><th>说明</th></tr>
+          <tr><td><strong>对事不对人</strong></td><td>审查的是代码，不是写代码的人。用"这段逻辑"而非"你的代码"开头。</td></tr>
+          <tr><td><strong>解释原因</strong></td><td>不要只说"改这个"，要说清楚为什么要改、不改会有什么后果。</td></tr>
+          <tr><td><strong>建议而非命令</strong></td><td>用"考虑使用 X 因为 Y"代替"改成 X"。除非是阻断性问题。</td></tr>
+          <tr><td><strong>优先级清晰</strong></td><td>每条意见必须标注 <span class="badge badge-blocker">🔴 Blocker</span> / <span class="badge badge-suggest">🟡 Suggestion</span> / <span class="badge badge-nit">💭 Nit</span>。</td></tr>
+          <tr><td><strong>表扬好代码</strong></td><td>发现巧妙实现要明确指出，正向反馈比批评更能驱动质量提升。</td></tr>
+          <tr><td><strong>一轮完毕</strong></td><td>一次性给出完整反馈，不要挤牙膏式分多轮补充意见。</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="alert alert-blue">
+      <strong>优先级定义：</strong>
+      <ul style="margin-top:8px; padding-left:20px;">
+        <li><span class="badge badge-blocker">🔴 Blocker</span> — 必须修复才能合并。安全漏洞、数据丢失风险、竞态条件、API 契约破坏、关键路径缺失错误处理。</li>
+        <li><span class="badge badge-suggest">🟡 Suggestion</span> — 建议修复但不阻断合并。输入校验缺失、命名模糊、性能问题、缺少测试。</li>
+        <li><span class="badge badge-nit">💭 Nit</span> — 锦上添花。风格一致性、文档补充、替代方案探讨。</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== 第二章 审查流程 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📋</span>二、审查流程（6 步工作流）</div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-content">
+          <h4>提交前自检（开发者）</h4>
+          <p>开发者提交 PR/MR 前，对照<strong>审查检查清单</strong>逐项自检。确认：无 lint 错误、无遗留 console.log/print 调试语句、无硬编码密钥/密码、关键路径有错误处理、新功能有对应测试。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-content">
+          <h4>提交 PR/MR（开发者）</h4>
+          <p>PR 标题格式：<code>[模块] 动词 + 描述</code>（如 <code>[chat-service] 修复 SSE 流式输出中断后记忆未持久化</code>）。PR 描述须包含：变更摘要、影响范围、测试方式、关联 Issue。指定至少 1 名审查者。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-content">
+          <h4>自动化检查（CI Pipeline）</h4>
+          <p>PR 提交后自动触发 CI：Ruff 检查（后端）→ ESLint + TypeScript 编译（前端）→ 单元测试 → 安全扫描（bandit / npm audit）。CI 不通过的 PR 不得进入人工审查。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-content">
+          <h4>人工审查（审查者，48 小时内）</h4>
+          <p>审查者在 48 小时内完成审查。审查顺序：先看整体设计 → 再逐文件检查 → 最后看细节。按优先级从高到低给出意见，表扬好的实践。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-content">
+          <h4>修改与回复（开发者）</h4>
+          <p>开发者逐条回复审查意见：已修复的 commit 引用、不采纳的理由说明。不采纳 <span class="badge badge-blocker">🔴 Blocker</span> 级意见必须有充分理由。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-content">
+          <h4>合并（审查者 Approve）</h4>
+          <p>所有 <span class="badge badge-blocker">🔴 Blocker</span> 解决后，审查者 Approve 并合并。合并方式推荐 Squash Merge，保持主分支历史清晰。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-yellow">
+      <strong>时效要求：</strong>审查者在 48 小时内响应；开发者 72 小时内完成修改；超时未响应的 PR 由团队负责人介入协调。
+    </div>
+  </div>
+
+  <!-- ===== 第三章 后端审查标准 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🐍</span>三、后端审查标准（Python / FastAPI）</div>
+
+    <div class="subsection-title">3.1 安全性（Security）</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点与示例</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>异常信息泄露</td>
+        <td>禁止将原始异常信息直接返回给客户端。本项目多处存在 <code>f"处理失败: {e}"</code> 模式，泄露内部结构。<br><strong>正确做法：</strong>对客户端返回通用错误消息，详细信息仅记入日志。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>SQL 注入</td>
+        <td>确认所有数据库查询使用 SQLAlchemy ORM 或参数化查询。禁止字符串拼接 SQL。检查 <code>text()</code> 调用是否绑定了参数。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>硬编码凭据</td>
+        <td>禁止在代码中硬编码 API Key、数据库密码、JWT Secret。检查 <code>settings.py</code> 是否从环境变量读取。默认密码 <code>admin/admin123</code> 必须在首次启动强制修改。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>认证与授权</td>
+        <td>所有 <code>/api/</code> 路径（排除 <code>/auth/login</code>、<code>/docs</code>、<code>/webhook/**</code> 等）必须经过 <code>AuthMiddleware</code>。管理端接口 <code>/admin/**</code> 必须校验 <code>is_admin</code> 字段。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>Prompt 注入</td>
+        <td>用户输入拼接进 LLM Prompt 前，必须用分隔符隔离。当前 <code>SYSTEM_PROMPT</code> 使用 <code>{context}</code> 占位符注入知识库内容，需确认 context 内容不会被用户操控来覆盖 system 指令。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>输入校验</td>
+        <td>所有 API 端点必须有 Pydantic Schema 校验入参。检查 <code>webhook_router.py</code> 中 <code>platform</code> 参数是否做了白名单校验。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>密钥管理</td>
+        <td><code>crypto.py</code> 的 <code>_derive_key()</code> 使用 SHA256 派生 Fernet 密钥——可接受但非最佳实践。建议未来迁移到 <code>scrypt</code> 或 <code>PBKDF2</code> 做密钥派生。当前实现不阻断，但需记录为技术债。</td>
+      </tr>
+    </table>
+
+    <div class="subsection-title">3.2 正确性与健壮性（Correctness）</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>异步上下文安全</td>
+        <td><code>ChatService._persist_messages</code> 使用独立 <code>AsyncSessionLocal</code> 防止主会话关闭——这是正确做法，需确保新增的 service 方法同样遵守此模式。禁止在 <code>finally</code> 块中使用请求级 DB session。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>降级策略一致性</td>
+        <td>所有外部依赖（Redis/Milvus/MinIO/LLM）的降级逻辑必须：①捕获具体异常而非裸 <code>except Exception</code>；②降级后记录 WARN 日志；③降级行为对上层透明。<code>LLMService._force_mock</code> 是实例级变量，多并发请求下可能互相影响——需评估线程安全性。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>Webhook 防重机制</td>
+        <td><code>_processed_messages</code> 是内存 dict，多 worker 部署时失效。建议迁移到 Redis SETNX + TTL。当前单 worker 可用，但需在 PR 中注明此限制。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>资源泄漏</td>
+        <td>检查 <code>AsyncOpenAI</code> 客户端是否在应用关闭时正确调用 <code>close()</code>。<code>LLMService.close()</code> 已实现但需确认 <code>main.py</code> 的 lifespan 中有调用。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>错误处理粒度</td>
+        <td><code>webhook_router.py</code> 中 <code>f"消息解析失败: {e}"</code> 直接返回给调用方，可能泄露内部异常类型。建议返回通用消息 + 内部日志。</td>
+      </tr>
+    </table>
+
+    <div class="subsection-title">3.3 性能（Performance）</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>N+1 查询</td>
+        <td>检查 RAG 检索、知识库列表等场景是否存在循环内执行 DB 查询。使用 <code>selectinload</code> 或批量查询替代。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>Redis Pipeline 使用</td>
+        <td><code>RateLimitMiddleware</code> 正确使用了 pipeline 批量操作——这是好的实践，新增的 Redis 操作也应遵循。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-nit">💭</span></td>
+        <td>Token 估算精度</td>
+        <td><code>LLMService.count_tokens</code> 用 <code>len(text)//4</code> 粗略估算，中文场景偏差较大。可选：引入 <code>tiktoken</code> 精确计算。</td>
+      </tr>
+    </table>
+
+    <div class="subsection-title">3.4 可维护性（Maintainability）</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>类型注解</td>
+        <td>所有函数签名必须有参数和返回值类型注解。当前后端覆盖较好，但 <code>_process_and_reply</code> 的 <code>adapter</code> 参数缺少类型。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>文档字符串</td>
+        <td>Service 层和复杂函数必须有 docstring 说明用途、参数、返回值。当前 <code>ChatService</code> 的 docstring 质量很高——以此为标准。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-nit">💭</span></td>
+        <td>常量提取</td>
+        <td>魔法数字（如 <code>chunk_size = 6</code>、<code>[:5]</code>、<code>[-10:]</code>）应提取为命名常量并注释含义。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-nit">💭</span></td>
+        <td>Mock 逻辑隔离</td>
+        <td><code>llm_service.py</code> 中 mock 回复逻辑占 ~150 行，建议提取到独立 <code>mock_data.py</code> 模块，降低 service 文件复杂度。</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 第四章 前端审查标准 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">⚡</span>四、前端审查标准（Vue 3 / TypeScript）</div>
+
+    <div class="subsection-title">4.1 类型安全</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>禁止 any</td>
+        <td>当前 <code>sse.ts</code> 中 <code>body: any</code> 和 <code>dispatchEvent(evt: any, ...)</code> 丢失了类型安全。必须定义具体接口替代 <code>any</code>。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>API 响应泛型</td>
+        <td><code>request.ts</code> 响应拦截器返回 <code>data as unknown as AxiosResponse</code> 类型断言——可接受但需确保调用方正确使用泛型 <code>request.get&lt;UserType&gt;()</code>。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>Props 类型</td>
+        <td>所有组件 <code>defineProps</code> 必须使用 TypeScript 接口或 <code>withDefaults</code>，禁止运行时默认值对象。</td>
+      </tr>
+    </table>
+
+    <div class="subsection-title">4.2 安全性</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-blocker">🔴</span></td>
+        <td>XSS 防护</td>
+        <td><code>MarkdownRenderer</code> 渲染 LLM 返回内容前必须经过 sanitize。确认 <code>markdown-it</code> 未开启 <code>html: true</code>，或使用 <code>DOMPurify</code> 过滤 HTML。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>Token 存储</td>
+        <td>当前 JWT 存储在 <code>localStorage</code>——存在 XSS 窃取风险。这是常见取舍，可接受但需在文档中注明风险。理想方案是 HttpOnly Cookie，但需后端配合。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>敏感信息</td>
+        <td>检查 <code>.env.production</code> 中的 <code>VITE_API_BASE_URL</code> 是否指向正确生产地址。Vite 环境变量以 <code>VITE_</code> 前缀会打包进前端 bundle，不可放密钥。</td>
+      </tr>
+    </table>
+
+    <div class="subsection-title">4.3 性能与体验</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>路由懒加载</td>
+        <td>确认 <code>router/index.ts</code> 所有页面级组件使用 <code>() => import()</code> 懒加载，减小首屏 bundle。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>SSE 连接管理</td>
+        <td><code>sse.ts</code> 的 <code>DONE_CLOSE_TIMEOUT_MS = 5000</code> 兜底超时设计合理。检查用户切换会话时是否正确 abort 旧连接，防止连接泄漏。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-nit">💭</span></td>
+        <td>大组件拆分</td>
+        <td><code>ChannelManagement.vue</code>（694 行）过大，建议拆分为子组件 + composable。</td>
+      </tr>
+    </table>
+
+    <div class="subsection-title">4.4 代码规范</div>
+    <table>
+      <tr>
+        <th style="width:60px;">级别</th>
+        <th style="width:25%;">检查项</th>
+        <th>审查要点</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>Composition API</td>
+        <td>统一使用 <code>&lt;script setup lang="ts"&gt;</code>，禁止 Options API 混用。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-suggest">🟡</span></td>
+        <td>响应式解构</td>
+        <td>禁止直接解构 <code>reactive</code> 对象（丢失响应性），使用 <code>toRefs</code> 或改用 <code>ref</code>。</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-nit">💭</span></td>
+        <td>import 排序</td>
+        <td>第三方库 → 框架 → 项目内部模块，按字母序排列。ESLnt 的 <code>import/order</code> 规则可自动处理。</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ===== 第五章 审查意见格式 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">✍️</span>五、审查意见格式规范</div>
+
+    <div class="card">
+      <p>每条审查意见必须包含：<strong>优先级标记</strong> → <strong>问题定位</strong>（文件+行号）→ <strong>原因解释</strong> → <strong>改进建议</strong>（含代码示例）。</p>
+    </div>
+
+    <div class="subsection-title">标准格式示例</div>
+    <div class="comment-example">
+      <div class="comment-header">
+        <span class="badge badge-blocker">🔴 Security: 异常信息泄露</span>
+      </div>
+      <div class="comment-body">
+        <strong>chat_service.py:211</strong> — <code>yield make_error_event(f"处理失败: {e}")</code><br><br>
+        <strong>原因：</strong>将原始 Python 异常对象直接拼接进返回给客户端的 SSE 事件，可能泄露内部模块名、数据库表结构、API 端点路径等敏感信息，为攻击者提供攻击面侦察线索。
+      </div>
+      <div class="comment-suggestion">
+        <strong>建议：</strong>对客户端返回通用消息，详细信息仅记入日志。<br><br>
+        <pre><code># 正确做法
+logger.exception("ChatService stream failed")
+yield make_error_event("处理失败，请稍后重试")</code></pre>
+      </div>
+    </div>
+
+    <div class="comment-example">
+      <div class="comment-header">
+        <span class="badge badge-good">✅ Good Pattern: 独立 Session 持久化</span>
+      </div>
+      <div class="comment-body">
+        <strong>chat_service.py:248</strong> — <code>async with AsyncSessionLocal() as new_db:</code><br><br>
+        <strong>点评：</strong>在 <code>finally</code> 块中使用独立 AsyncSession 执行双写，避免主会话提前关闭导致写入失败——这是一个非常专业的设计。注释也清楚地解释了原因。建议其他 Service 方法参照此模式。
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 第六章 自动化工具配置建议 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔧</span>六、自动化工具配置建议</div>
+
+    <div class="alert alert-red">
+      <strong>当前状态：</strong>项目无 ESLint、Prettier、Ruff、pre-commit、CI/CD 配置，无 <code>.gitignore</code>，甚至不是 Git 仓库。这是<strong>最高优先级</strong>的基础设施缺口。
+    </div>
+
+    <div class="subsection-title">6.1 后端：Ruff + pre-commit</div>
+    <p>在 <code>ai-customer-backend/</code> 下创建 <code>pyproject.toml</code>：</p>
+    <pre><code>[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear (常见 bug 模式)
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "S",    # flake8-bandit (安全检查)
+    "T20",  # flake8-print (禁止 print 调试)
+    "RET",  # flake8-return
+]
+ignore = [
+    "E501",  # 行长由 formatter 处理
+    "S101",  # assert 在测试中可用
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["T20"]  # 脚本允许 print</code></pre>
+
+    <p>在 <code>requirements.txt</code> 添加：</p>
+    <pre><code>ruff>=0.4.0
+bandit>=1.7.0
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+httpx>=0.27.0  # FastAPI TestClient 底层依赖</code></pre>
+
+    <div class="subsection-title">6.2 前端：ESLint + Prettier</div>
+    <p>在 <code>ai-customer-frontend/</code> 下创建 <code>.eslintrc.cjs</code>：</p>
+    <pre><code>module.exports = {
+  root: true,
+  env: { browser: true, es2023: true, node: true },
+  extends: [
+    'eslint:recommended',
+    '@vue/eslint-config-typescript',
+    '@vue/eslint-config-prettier',
+  ],
+  parserOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+  rules: {
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-debugger': 'error',
+    '@typescript-eslint/no-explicit-any': 'error',
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'vue/multi-word-component-names': 'off',
+    'import/order': ['error', {
+      'groups': ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+      'newlines-between': 'always',
+    }],
+  },
+}</code></pre>
+
+    <p>创建 <code>.prettierrc</code>：</p>
+    <pre><code>{
+  "semi": false,
+  "singleQuote": true,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "trailingComma": "es5"
+}</code></pre>
+
+    <p>在 <code>package.json</code> 添加 devDependencies 和 scripts：</p>
+    <pre><code>"devDependencies": {
+  "eslint": "^8.57.0",
+  "@vue/eslint-config-typescript": "^13.0.0",
+  "@vue/eslint-config-prettier": "^9.0.0",
+  "prettier": "^3.3.0"
+},
+"scripts": {
+  "lint": "eslint src/ --ext .ts,.vue --fix",
+  "format": "prettier --write src/",
+  "type-check": "vue-tsc --noEmit"
+}</code></pre>
+
+    <div class="subsection-title">6.3 Git + .gitignore + pre-commit</div>
+    <p>项目根目录创建 <code>.gitignore</code>：</p>
+    <pre><code># Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+
+# 环境配置
+.env
+.env.local
+
+# 运行时数据
+data/
+*.db
+*.sqlite
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 日志
+*.log</code></pre>
+
+    <p>项目根目录创建 <code>.pre-commit-config.yaml</code>：</p>
+    <pre><code>repos:
+  # 后端 Ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # 前端 ESLint + Prettier
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.57.0
+    hooks:
+      - id: eslint
+        files: \.(ts|vue)$
+        args: [--fix]
+
+  # 通用：禁止提交大文件、密钥
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace</code></pre>
+
+    <div class="subsection-title">6.4 CI/CD Pipeline（GitHub Actions 示例）</div>
+    <p>项目根目录创建 <code>.github/workflows/ci.yml</code>：</p>
+    <pre><code>name: CI
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: ai-customer-backend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.13' }
+      - run: pip install -r requirements.txt
+      - run: ruff check app/
+      - run: ruff format --check app/
+      - run: bandit -r app/ -ll
+      # - run: pytest tests/ -v --cov=app  # 待建立测试套件后启用
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: ai-customer-frontend } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci
+      - run: npm run type-check
+      - run: npm run lint
+      - run: npm run build</code></pre>
+  </div>
+
+  <!-- ===== 第七章 PR 模板 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📝</span>七、PR/MR 提交模板</div>
+
+    <div class="card">
+      <p>在项目根目录创建 <code>.github/pull_request_template.md</code>：</p>
+      <pre><code>## 变更摘要
+&lt;一句话描述本次改动&gt;
+
+## 变更类型
+- [ ] 新功能 (feat)
+- [ ] Bug 修复 (fix)
+- [ ] 重构 (refactor)
+- [ ] 性能优化 (perf)
+- [ ] 安全修复 (security)
+- [ ] 文档/配置 (chore)
+
+## 影响范围
+&lt;列出受影响的模块/文件，标注是否为破坏性变更&gt;
+
+## 测试方式
+&lt;描述如何验证本次改动，附测试命令或步骤&gt;
+
+## 自检清单
+- [ ] 已运行 lint（ruff / eslint）无报错
+- [ ] 已移除所有调试语句（print / console.log）
+- [ ] 无硬编码密钥/密码/Token
+- [ ] 新增 API 端点有 Pydantic Schema 校验
+- [ ] 关键路径有 try/except 错误处理
+- [ ] 异常信息未泄露给客户端
+- [ ] 新功能有对应测试
+
+## 关联 Issue
+&lt;#issue_number&gt;</code></pre>
+    </div>
+  </div>
+
+  <!-- ===== 第八章 项目特定审查要点 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🔍</span>八、本项目特定审查要点</div>
+
+    <div class="card">
+      <p>基于代码审查结果，以下是本项目的<strong>重点关注项</strong>：</p>
+
+      <div class="two-col">
+        <div>
+          <h4 style="color: var(--red); margin-bottom: 10px;">🔴 当前最高优先级</h4>
+          <ul class="checklist">
+            <li><span class="check-icon">⚠️</span><span>初始化 Git 仓库 + <code>.gitignore</code></span></li>
+            <li><span class="check-icon">⚠️</span><span>配置 Ruff（后端）+ ESLint/Prettier（前端）</span></li>
+            <li><span class="check-icon">⚠️</span><span>建立 <code>tests/</code> 目录 + pytest 基础测试</span></li>
+            <li><span class="check-icon">⚠️</span><span>修复异常信息泄露（6 处 <code>f"...: {e}"</code> 模式）</span></li>
+          </ul>
+        </div>
+        <div>
+          <h4 style="color: var(--yellow); margin-bottom: 10px;">🟡 中期改进</h4>
+          <ul class="checklist">
+            <li><span class="check-icon">📋</span><span>Webhook 防重迁移到 Redis</span></li>
+            <li><span class="check-icon">📋</span><span><code>LLMService._force_mock</code> 并发安全评估</span></li>
+            <li><span class="check-icon">📋</span><span>前端 <code>any</code> 类型替换为接口</span></li>
+            <li><span class="check-icon">📋</span><span>Markdown 渲染 XSS 防护审计</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h4 style="color: var(--green); margin-bottom: 12px;">✅ 值得保持的优秀实践</h4>
+      <ul class="checklist">
+        <li><span class="check-icon">✅</span><span><strong>全异步架构 + 降级策略</strong> — 所有外部依赖都有降级方案，保证无依赖时也能演示，这是生产级意识。</span></li>
+        <li><span class="check-icon">✅</span><span><strong>独立 Session 持久化</strong> — <code>ChatService._persist_messages</code> 用独立 AsyncSession 防止主会话关闭，专业的异步上下文管理。</span></li>
+        <li><span class="check-icon">✅</span><span><strong>SSE 连接管理</strong> — <code>sse.ts</code> 用 XHR + onprogress 规避 Chrome fetch 流的 ERR_ABORTED 问题，且有 5s 兜底超时。</span></li>
+        <li><span class="check-icon">✅</span><span><strong>Redis Pipeline 限流</strong> — <code>RateLimitMiddleware</code> 用 ZSet 滑动窗口 + Pipeline 批量操作，高效且正确。</span></li>
+        <li><span class="check-icon">✅</span><span><strong>API Key 加密存储</strong> — <code>crypto.py</code> 用 Fernet AES 加密 API Key，不在数据库明文存储。</span></li>
+        <li><span class="check-icon">✅</span><span><strong>Docstring 质量</strong> — <code>ChatService</code> 的方法文档清晰描述了 9 步流程，是全项目的文档标杆。</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== 第九章 审查者轮值 ===== -->
+  <div class="section">
+    <div class="section-title"><span class="icon">👥</span>九、审查者轮值与责任</div>
+
+    <table>
+      <tr>
+        <th style="width:20%;">角色</th>
+        <th style="width:30%;">职责</th>
+        <th>要求</th>
+      </tr>
+      <tr>
+        <td>主审查者</td>
+        <td>逐文件审查代码逻辑、安全、性能</td>
+        <td>熟悉该模块业务逻辑；48h 内完成；给出带优先级的完整意见</td>
+      </tr>
+      <tr>
+        <td>副审查者</td>
+        <td>补充主审查者遗漏；关注跨模块影响</td>
+        <td>可选；至少浏览 PR 描述和 diff 摘要</td>
+      </tr>
+      <tr>
+        <td>安全审查者</td>
+        <td>审查涉及认证、加密、外部输入的改动</td>
+        <td>PR 涉及 auth/crypto/webhook/LLM prompt 时必须指定</td>
+      </tr>
+      <tr>
+        <td>团队负责人</td>
+        <td>协调审查冲突；审批超时 PR</td>
+        <td>审查者与开发者意见不统一时做最终裁定</td>
+      </tr>
+    </table>
+
+    <div class="alert alert-green">
+      <strong>审查者轮值原则：</strong>避免同一人连续审查同一模块超过 2 周，促进知识交叉传播。新人提交的 PR 由资深成员审查；资深成员的 PR 互审。
+    </div>
+  </div>
+
+  <!-- ===== Footer ===== -->
+  <div class="footer">
+    <p>代码审查标准与流程规范 v1.0 · AI智能客服系统</p>
+    <p>适用技术栈: Python 3.13 / FastAPI / Vue 3.4 / TypeScript 5.4 / SQLAlchemy 2.0 / Redis 7 / Milvus 2.4</p>
+  </div>
+
+</div>
+</body>
+</html>

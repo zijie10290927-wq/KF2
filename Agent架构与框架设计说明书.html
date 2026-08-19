@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 出图产品智能客服 Agent — 架构与框架设计说明书</title>
+<style>
+  :root{
+    --primary:#2563eb; --primary-light:#eff6ff; --primary-border:#bfdbfe;
+    --green:#059669; --green-light:#ecfdf5;
+    --amber:#d97706; --amber-light:#fffbeb;
+    --red:#dc2626; --red-light:#fef2f2;
+    --purple:#7c3aed; --purple-light:#f5f3ff;
+    --gray-900:#111827; --gray-700:#374151; --gray-500:#6b7280; --gray-200:#e5e7eb; --gray-50:#f9fafb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--gray-900);background:#fff;line-height:1.75;font-size:15px}
+  .container{max-width:1060px;margin:0 auto;padding:48px 32px 96px}
+  header.hero{background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 55%,#3b82f6 100%);color:#fff;border-radius:16px;padding:40px 44px;margin-bottom:40px}
+  header.hero h1{font-size:28px;font-weight:700;margin-bottom:10px}
+  header.hero .subtitle{font-size:15px;opacity:.92}
+  header.hero .meta{display:flex;gap:24px;margin-top:20px;flex-wrap:wrap}
+  header.hero .meta span{background:rgba(255,255,255,.15);padding:4px 14px;border-radius:999px;font-size:13px}
+  h2{font-size:21px;font-weight:700;color:#1e3a8a;border-left:5px solid var(--primary);padding-left:12px;margin:52px 0 18px}
+  h3{font-size:17px;font-weight:600;color:var(--gray-900);margin:28px 0 12px}
+  h4{font-size:15px;font-weight:600;color:var(--gray-700);margin:20px 0 8px}
+  p{margin:10px 0;color:var(--gray-700)}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+  th{background:var(--primary-light);color:#1e40af;text-align:left;padding:10px 12px;border:1px solid var(--primary-border);font-weight:600}
+  td{padding:9px 12px;border:1px solid var(--gray-200);color:var(--gray-700);vertical-align:top}
+  tr:nth-child(even) td{background:var(--gray-50)}
+  code{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:4px;padding:1px 6px;font-family:Consolas,"Courier New",monospace;font-size:13px;color:#b91c1c}
+  .callout{border-radius:10px;padding:16px 20px;margin:18px 0;font-size:14px}
+  .callout.blue{background:var(--primary-light);border-left:4px solid var(--primary)}
+  .callout.green{background:var(--green-light);border-left:4px solid var(--green)}
+  .callout.amber{background:var(--amber-light);border-left:4px solid var(--amber)}
+  .callout.red{background:var(--red-light);border-left:4px solid var(--red)}
+  .callout b{display:block;margin-bottom:4px}
+  ul,ol{margin:10px 0 10px 24px;color:var(--gray-700)}
+  li{margin:5px 0}
+  .tag{display:inline-block;font-size:12px;padding:2px 10px;border-radius:999px;font-weight:600;margin:2px 4px 2px 0}
+  .tag-blue{background:var(--primary-light);color:var(--primary)}
+  .tag-green{background:var(--green-light);color:var(--green)}
+  .tag-amber{background:var(--amber-light);color:var(--amber)}
+  .tag-red{background:var(--red-light);color:var(--red)}
+  .tag-purple{background:var(--purple-light);color:var(--purple)}
+  .toc{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:20px 28px;margin-bottom:8px}
+  .toc ol{margin-left:20px}
+  .figure{margin:24px 0;border:1px solid var(--gray-200);border-radius:12px;padding:20px;background:#fff}
+  .figure .cap{text-align:center;font-size:13px;color:var(--gray-500);margin-top:12px}
+  footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--gray-200);font-size:13px;color:var(--gray-500)}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header class="hero">
+  <h1>AI 出图产品智能客服 Agent<br>架构与框架设计说明书</h1>
+  <div class="subtitle">Agent 类型定位 · 总体架构 · 框架选型论证 · 关键机制设计 · 演进路线</div>
+  <div class="meta">
+    <span>版本 v1.0</span><span>后端 Python / FastAPI</span><span>LLM：OpenAI 兼容接口</span><span>向量库：Milvus</span><span>缓存：Redis</span>
+  </div>
+</header>
+
+<div class="toc">
+  <b>目录</b>
+  <ol>
+    <li>项目背景与设计目标</li>
+    <li>Agent 类型定位：RAG + 意图路由的单体编排式 Agent</li>
+    <li>总体架构：五层架构设计</li>
+    <li>核心编排流程：9 步确定性管道</li>
+    <li>框架选型论证：为什么自研轻量编排，不用 LangChain / AutoGen</li>
+    <li>关键子架构设计</li>
+    <li>架构权衡（Trade-off）分析</li>
+    <li>演进路线：何时升级为多 Agent 架构</li>
+  </ol>
+</div>
+
+<!-- ===================== 1 ===================== -->
+<h2>一、项目背景与设计目标</h2>
+<p>本项目面向「AI 出图产品」的用户提供 7×24 小时智能客服，核心场景是<b>产品功能咨询、常见问题解答与转人工</b>。设计目标（按优先级）：</p>
+<table>
+  <tr><th style="width:90px">优先级</th><th style="width:170px">目标</th><th>说明</th></tr>
+  <tr><td><span class="tag tag-red">P0</span></td><td>回答可控、可追溯</td><td>客服场景对幻觉零容忍，答案必须来自知识库（RAG 引用下发），不允许 LLM 自由发挥</td></tr>
+  <tr><td><span class="tag tag-red">P0</span></td><td>链路稳定、可降级</td><td>任何外部依赖（LLM/Milvus/Redis/MinIO）故障都不能阻断主流程，必须有 mock/兜底路径</td></tr>
+  <tr><td><span class="tag tag-amber">P1</span></td><td>低延迟流式响应</td><td>SSE 逐 token 下发，首字延迟 &lt; 2s</td></tr>
+  <tr><td><span class="tag tag-amber">P1</span></td><td>小团队可维护</td><td>2~3 人团队、无专职算法，架构必须简单直白、调试链路清晰</td></tr>
+  <tr><td><span class="tag tag-blue">P2</span></td><td>多渠道可扩展</td><td>后续接入智齿/七鱼/Chatwoot 等第三方客服平台，渠道层可插拔</td></tr>
+</table>
+
+<!-- ===================== 2 ===================== -->
+<h2>二、Agent 类型定位</h2>
+
+<div class="callout blue">
+  <b>结论</b>
+  本项目是一个 <b>RAG + 意图路由的单体客服 Agent</b>（RAG-based Intent-Routed Single Agent），采用<b>固定管道编排架构（Pipeline Orchestration）</b>。ChatService 是唯一编排器，LLM 在管道中作为<b>子任务执行器</b>被串行调用 3 次，而非自主决策者。
+</div>
+
+<h3>2.1 在 Agent 能力光谱中的位置</h3>
+<table>
+  <tr><th>能力维度</th><th>本项目</th><th>说明</th></tr>
+  <tr><td>Agent 数量</td><td><b>单 Agent</b></td><td>ChatService 唯一编排器，无多 Agent 协作</td></tr>
+  <tr><td>推理模式</td><td><b>确定性 if-else 管道</b></td><td>非 ReAct 推理循环、非 Plan-and-Execute</td></tr>
+  <tr><td>工具调用（Tool-use）</td><td><b>无</b></td><td>LLM 调用不传 <code>tools</code> 参数，不自主调用函数</td></tr>
+  <tr><td>知识获取</td><td><b>RAG（混合检索）</b></td><td>向量 + 关键词双路召回，RRF 融合</td></tr>
+  <tr><td>记忆机制</td><td><b>短期对话记忆</b></td><td>Redis 滑动窗口（最近 10~20 条）+ MySQL 持久化</td></tr>
+  <tr><td>Agent 框架依赖</td><td><b>无</b></td><td>不依赖 LangChain Agent / AutoGen / CrewAI，纯自研编排</td></tr>
+</table>
+
+<div class="callout amber">
+  <b>命名澄清</b>
+  代码中的 "Agent" 字样（应用名「AI 出图产品智能客服 Agent」、模型名 <code>ai-customer-agent</code>）是<b>产品命名</b>，指"面向 Agent 化产品的客服系统"，不是框架级的自治 Agent 实体。这是一类业界常见的「Workflow 型 AI 应用」，Google A2A 语境下属于 <i>Single-agent workflow</i>。
+</div>
+
+<h3>2.2 为什么定位成"单体编排式"而不是"自治 Agent"</h3>
+<ul>
+  <li><b>场景收敛</b>：客服 QA 是单一域任务，问题空间可枚举（产品咨询 / 闲聊 / 模糊），不需要跨域自主规划；</li>
+  <li><b>可控性要求</b>：固定管道每一步的行为可预测、可单测、可审计——客服回答出错的排查成本远高于灵活性收益；</li>
+  <li><b>成本与延迟</b>：ReAct 式自治 Agent 单轮需要 3~8 次 LLM 往返；固定管道把 LLM 调用压缩到精确的 3 次（意图/改写/生成），延迟和 token 成本降低 50% 以上；</li>
+  <li><b>团队匹配</b>：2~3 人全栈团队维护一套 if-else 管道的门槛，远低于维护自治 Agent 的 prompt 调优与行为回归测试。</li>
+</ul>
+
+<!-- ===================== 3 ===================== -->
+<h2>二、五、总体架构：五层架构设计</h2>
+
+<div class="figure">
+<svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg" font-family="PingFang SC,Microsoft YaHei,sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6b7280"/></marker>
+  </defs>
+  <!-- 接入层 -->
+  <rect x="40" y="16" width="880" height="74" rx="10" fill="#eff6ff" stroke="#bfdbfe"/>
+  <text x="60" y="40" font-size="14" font-weight="700" fill="#1e3a8a">① 接入层（Channel Layer）</text>
+  <text x="60" y="60" font-size="11" fill="#374151">Web SSE / OpenAPI；BaseAdapter 抽象基类 + 工厂注册，可插拔接入智齿 / 七鱼 / Chatwoot</text>
+  <rect x="620" y="30" width="130" height="26" rx="6" fill="#fff" stroke="#93c5fd"/><text x="685" y="47" font-size="11" text-anchor="middle" fill="#1e40af">WebChatAdapter</text>
+  <rect x="765" y="30" width="130" height="26" rx="6" fill="#fff" stroke="#93c5fd" stroke-dasharray="4 3"/><text x="830" y="47" font-size="11" text-anchor="middle" fill="#6b7280">第三方 Adapter（预留）</text>
+  <line x1="480" y1="90" x2="480" y2="118" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 编排层 -->
+  <rect x="40" y="118" width="880" height="96" rx="10" fill="#ede9fe" stroke="#ddd6fe"/>
+  <text x="60" y="142" font-size="14" font-weight="700" fill="#5b21b6">② 编排层（Orchestration Layer）— 唯一 Agent：ChatService</text>
+  <rect x="60" y="152" width="180" height="26" rx="6" fill="#fff" stroke="#c4b5fd"/><text x="150" y="169" font-size="11" text-anchor="middle" fill="#5b21b6">handle_message_stream()</text>
+  <rect x="260" y="152" width="150" height="26" rx="6" fill="#fff" stroke="#c4b5fd"/><text x="335" y="169" font-size="11" text-anchor="middle" fill="#5b21b6">意图分支 if-else</text>
+  <rect x="430" y="152" width="150" height="26" rx="6" fill="#fff" stroke="#c4b5fd"/><text x="505" y="169" font-size="11" text-anchor="middle" fill="#5b21b6">SSE 事件流下发</text>
+  <rect x="600" y="152" width="150" height="26" rx="6" fill="#fff" stroke="#c4b5fd"/><text x="675" y="169" font-size="11" text-anchor="middle" fill="#5b21b6">异常兜底 / 降级</text>
+  <text x="60" y="202" font-size="11" fill="#6b7280">固定 9 步管道：意图 → 分支 → RAG → 记忆 → Prompt → 引用 → 流式生成 → done → 持久化</text>
+  <line x1="480" y1="214" x2="480" y2="242" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 能力层 -->
+  <rect x="40" y="242" width="880" height="118" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/>
+  <text x="60" y="266" font-size="14" font-weight="700" fill="#065f46">③ 能力层（Service Layer）— 5 个领域服务</text>
+  <rect x="60" y="278" width="160" height="56" rx="6" fill="#fff" stroke="#6ee7b7"/><text x="140" y="300" font-size="11.5" text-anchor="middle" fill="#065f46" font-weight="600">IntentService</text><text x="140" y="318" font-size="10" text-anchor="middle" fill="#6b7280">规则+LLM 双层意图识别</text>
+  <rect x="240" y="278" width="160" height="56" rx="6" fill="#fff" stroke="#6ee7b7"/><text x="320" y="300" font-size="11.5" text-anchor="middle" fill="#065f46" font-weight="600">RAGService</text><text x="320" y="318" font-size="10" text-anchor="middle" fill="#6b7280">8 步混合检索流水线</text>
+  <rect x="420" y="278" width="160" height="56" rx="6" fill="#fff" stroke="#6ee7b7"/><text x="500" y="300" font-size="11.5" text-anchor="middle" fill="#065f46" font-weight="600">MemoryService</text><text x="500" y="318" font-size="10" text-anchor="middle" fill="#6b7280">Redis 短期 / MySQL 长期</text>
+  <rect x="600" y="278" width="160" height="56" rx="6" fill="#fff" stroke="#6ee7b7"/><text x="680" y="300" font-size="11.5" text-anchor="middle" fill="#065f46" font-weight="600">LLMService</text><text x="680" y="318" font-size="10" text-anchor="middle" fill="#6b7280">openai.AsyncOpenAI 封装</text>
+  <rect x="780" y="278" width="120" height="56" rx="6" fill="#fff" stroke="#6ee7b7"/><text x="840" y="300" font-size="11.5" text-anchor="middle" fill="#065f46" font-weight="600">Knowledge...</text><text x="840" y="318" font-size="10" text-anchor="middle" fill="#6b7280">文档入库/切分</text>
+  <line x1="480" y1="360" x2="480" y2="388" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 数据层 -->
+  <rect x="40" y="388" width="880" height="92" rx="10" fill="#fffbeb" stroke="#fde68a"/>
+  <text x="60" y="412" font-size="14" font-weight="700" fill="#92400e">④ 数据层（Data Layer）</text>
+  <rect x="60" y="424" width="150" height="26" rx="6" fill="#fff" stroke="#fcd34d"/><text x="135" y="441" font-size="11" text-anchor="middle" fill="#92400e">Milvus 向量库</text>
+  <rect x="230" y="424" width="150" height="26" rx="6" fill="#fff" stroke="#fcd34d"/><text x="305" y="441" font-size="11" text-anchor="middle" fill="#92400e">MySQL 业务库</text>
+  <rect x="400" y="424" width="150" height="26" rx="6" fill="#fff" stroke="#fcd34d"/><text x="475" y="441" font-size="11" text-anchor="middle" fill="#92400e">Redis 缓存/限流</text>
+  <rect x="570" y="424" width="150" height="26" rx="6" fill="#fff" stroke="#fcd34d"/><text x="645" y="441" font-size="11" text-anchor="middle" fill="#92400e">MinIO 文件存储</text>
+  <rect x="740" y="424" width="150" height="26" rx="6" fill="#fff" stroke="#fcd34d"/><text x="815" y="441" font-size="11" text-anchor="middle" fill="#92400e">SystemConfig 配置表</text>
+  <line x1="480" y1="480" x2="480" y2="508" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 基础设施 -->
+  <rect x="40" y="508" width="880" height="70" rx="10" fill="#f9fafb" stroke="#e5e7eb"/>
+  <text x="60" y="532" font-size="14" font-weight="700" fill="#374151">⑤ 基础设施层（Infrastructure）</text>
+  <text x="60" y="556" font-size="11" fill="#6b7280">Docker Compose 一键部署 · Embedding 服务 · LLM API（OpenAI 兼容） · 日志与监控 · 限流中间件</text>
+
+  <!-- 侧边贯穿说明 -->
+  <rect x="40" y="600" width="880" height="30" rx="6" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="480" y="620" font-size="11.5" text-anchor="middle" fill="#991b1b" font-weight="600">横切设计：降级优先（所有外部依赖失败不阻断主流程）· 配置化驱动（运行时参数热更新）· 双写一致性（Redis+MySQL）</text>
+</svg>
+<div class="cap">图 1 ｜ 五层总体架构：接入 → 编排（唯一 Agent）→ 能力服务 → 数据 → 基础设施，红色横切设计贯穿全栈</div>
+</div>
+
+<!-- ===================== 4 ===================== -->
+<h2>四、核心编排流程：9 步确定性管道</h2>
+<p><code>ChatService.handle_message_stream()</code> 是整个系统的"主干道"，按固定顺序串联以下 9 步：</p>
+
+<div class="figure">
+<svg viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg" font-family="PingFang SC,Microsoft YaHei,sans-serif">
+  <defs><marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+  <!-- row 1 -->
+  <g>
+    <rect x="30" y="30" width="130" height="64" rx="10" fill="#eff6ff" stroke="#3b82f6"/><text x="95" y="56" font-size="12" text-anchor="middle" fill="#1e3a8a" font-weight="700">1 意图识别</text><text x="95" y="74" font-size="10" text-anchor="middle" fill="#6b7280">规则 → LLM 兜底</text>
+    <rect x="195" y="30" width="130" height="64" rx="10" fill="#fff7ed" stroke="#f97316"/><text x="260" y="50" font-size="12" text-anchor="middle" fill="#9a3412" font-weight="700">2 意图分支</text><text x="260" y="66" font-size="9.5" text-anchor="middle" fill="#9a3412">off_topic→兜底</text><text x="260" y="80" font-size="9.5" text-anchor="middle" fill="#9a3412">ambiguous→澄清</text>
+    <rect x="360" y="30" width="130" height="64" rx="10" fill="#ecfdf5" stroke="#10b981"/><text x="425" y="56" font-size="12" text-anchor="middle" fill="#065f46" font-weight="700">3 RAG 检索</text><text x="425" y="74" font-size="10" text-anchor="middle" fill="#6b7280">8 步混合流水线</text>
+    <rect x="525" y="30" width="130" height="64" rx="10" fill="#f5f3ff" stroke="#8b5cf6"/><text x="590" y="56" font-size="12" text-anchor="middle" fill="#5b21b6" font-weight="700">4 记忆加载</text><text x="590" y="74" font-size="10" text-anchor="middle" fill="#6b7280">Redis 最近 10 条</text>
+    <rect x="690" y="30" width="130" height="64" rx="10" fill="#f5f3ff" stroke="#8b5cf6"/><text x="755" y="56" font-size="12" text-anchor="middle" fill="#5b21b6" font-weight="700">5 Prompt 组装</text><text x="755" y="74" font-size="10" text-anchor="middle" fill="#6b7280">历史+RAG+System</text>
+    <line x1="160" y1="62" x2="193" y2="62" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="325" y1="62" x2="358" y2="62" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="490" y1="62" x2="523" y2="62" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="655" y1="62" x2="688" y2="62" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+  </g>
+  <!-- connector down -->
+  <path d="M 755 94 L 755 130 L 425 130 L 425 162" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <!-- row 2 -->
+  <g>
+    <rect x="30" y="166" width="130" height="64" rx="10" fill="#ecfeff" stroke="#06b6d4"/><text x="95" y="192" font-size="12" text-anchor="middle" fill="#155e75" font-weight="700">9 持久化</text><text x="95" y="210" font-size="10" text-anchor="middle" fill="#6b7280">finally 双写 R+M</text>
+    <rect x="195" y="166" width="130" height="64" rx="10" fill="#ecfeff" stroke="#06b6d4"/><text x="260" y="192" font-size="12" text-anchor="middle" fill="#155e75" font-weight="700">8 done 事件</text><text x="260" y="210" font-size="10" text-anchor="middle" fill="#6b7280">SSE 结束帧</text>
+    <rect x="360" y="166" width="130" height="64" rx="10" fill="#dbeafe" stroke="#2563eb"/><text x="425" y="186" font-size="12" text-anchor="middle" fill="#1e3a8a" font-weight="700">7 流式生成</text><text x="425" y="202" font-size="10" text-anchor="middle" fill="#6b7280">LLM stream=True</text><text x="425" y="216" font-size="10" text-anchor="middle" fill="#6b7280">answer 逐 token</text>
+    <rect x="525" y="166" width="130" height="64" rx="10" fill="#dbeafe" stroke="#2563eb"/><text x="590" y="192" font-size="12" text-anchor="middle" fill="#1e3a8a" font-weight="700">6 引用下发</text><text x="590" y="210" font-size="10" text-anchor="middle" fill="#6b7280">SSE source 事件</text>
+    <line x1="523" y1="198" x2="493" y2="198" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="358" y1="198" x2="328" y2="198" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+    <line x1="193" y1="198" x2="163" y2="198" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr2)"/>
+  </g>
+  <text x="480" y="262" font-size="11.5" text-anchor="middle" fill="#991b1b" font-weight="600">LLM 全链路仅 3 次调用：① 意图分类（temp=0.05, max_tokens=80） ② Query 改写 ③ 流式回答生成</text>
+</svg>
+<div class="cap">图 2 ｜ 9 步编排管道：意图分支处 off_topic / ambiguous 短路返回，主流程继续走 RAG → 生成 → 持久化</div>
+</div>
+
+<h3>4.1 LLM 的 3 次调用点（子任务执行器，非 3 个 Agent）</h3>
+<table>
+  <tr><th style="width:110px">调用点</th><th style="width:200px">用途</th><th>关键参数</th></tr>
+  <tr><td>① 意图分类</td><td>Few-shot 判断 intent + confidence</td><td><code>temperature=0.05, max_tokens=80</code>，追求确定性</td></tr>
+  <tr><td>② Query 改写</td><td>口语 → 标准术语，生成 1~3 个改写版本提升召回</td><td>非流式，短输出</td></tr>
+  <tr><td>③ 回答生成</td><td>基于 RAG 上下文 + 对话历史生成回复</td><td><code>stream=True</code>，SSE 逐 token 下发</td></tr>
+</table>
+
+<!-- ===================== 5 ===================== -->
+<h2>五、框架选型论证：为什么自研轻量编排</h2>
+
+<h3>5.1 候选框架对比</h3>
+<table>
+  <tr><th style="width:150px">方案</th><th style="width:110px">Agent 类型</th><th style="width:210px">优势</th><th style="width:250px">劣势（对本项目）</th><th>结论</th></tr>
+  <tr>
+    <td><b>自研固定管道</b><br><span style="font-size:12px;color:#6b7280">（本项目采用）</span></td>
+    <td>Workflow 型单 Agent</td>
+    <td>零框架依赖；行为 100% 可预测；每步可单测；延迟/成本精确可控；调试链路直白</td>
+    <td>流程变更需改代码（已用 SystemConfig 配置化缓解）</td>
+    <td><span class="tag tag-green">✔ 采用</span></td>
+  </tr>
+  <tr>
+    <td>LangChain / LangGraph</td>
+    <td>Chain / Graph Agent</td>
+    <td>生态最全，RAG 组件丰富，上手快</td>
+    <td>抽象层厚、版本碎片化严重；SSE 流式需绕过其封装；深度定制（混合检索 RRF、双层意图）时反而要大量"打穿"框架；依赖树臃肿</td>
+    <td><span class="tag tag-red">✘ 否决</span></td>
+  </tr>
+  <tr>
+    <td>AutoGen / CrewAI</td>
+    <td>多 Agent 协作</td>
+    <td>角色分工、任务委托能力强</td>
+    <td>本项目是<b>单域任务</b>，无多角色协作需求；多 Agent 通信使延迟×3~5、token 成本×3~5，且行为不可预测，违反 P0 可控性目标</td>
+    <td><span class="tag tag-red">✘ 否决</span></td>
+  </tr>
+  <tr>
+    <td>ReAct 自治 Agent<br><span style="font-size:12px;color:#6b7280">（LLM 自主规划+工具调用）</span></td>
+    <td>自治单 Agent</td>
+    <td>泛化能力强，能处理开放任务</td>
+    <td>客服 QA 问题空间可枚举，用不上自主规划；推理循环不可审计；幻觉风险高（违背 RAG 引用可控原则）</td>
+    <td><span class="tag tag-red">✘ 否决</span></td>
+  </tr>
+  <tr>
+    <td>Dify / Coze 等低代码平台</td>
+    <td>可视化 Workflow</td>
+    <td>零代码搭建、迭代快</td>
+    <td>私有化部署与深度定制受限；混合检索、双层意图、渠道适配等需求需写大量自定义插件，最终变成"平台里写代码"</td>
+    <td><span class="tag tag-amber">△ 备选</span></td>
+  </tr>
+</table>
+
+<h3>5.2 选型决策的四个核心论据</h3>
+<ol>
+  <li><b>任务形态决定架构形态</b>。Anthropic 在《Building Effective Agents》中的核心结论：能用固定工作流解决的，不要用自治 Agent。客服 QA 恰好是"输入可分类、步骤可枚举、输出可模板化"的典型固定工作流场景。</li>
+  <li><b>可控性 &gt; 灵活性</b>。客服回答直接面向终端用户，产品要求"答案必须有知识库出处（source 事件下发引用）"。固定管道保证每个回答都经过 RAG 检索；自治 Agent 则可能在推理循环中跳过检索、自由发挥。</li>
+  <li><b>性能与成本可预算</b>。固定管道 = 恒定 3 次 LLM 调用，成本与延迟可精确估算；自治 Agent 的调用次数是运行时变量，无法做容量规划。对 QPS 可预期的客服入口，这一点是硬需求。</li>
+  <li><b>团队能力匹配</b>。2~3 人团队维护自研管道只需 Python 工程能力；引入 LangChain 生态则需要持续跟踪其版本演进、抽象变更，隐性维护成本高于自研。</li>
+</ol>
+
+<div class="callout green">
+  <b>一句话论证</b>
+  本项目的需求是"可控、可追溯、低延迟的单域客服 QA"，而固定管道单 Agent 是该需求下<b>复杂度最低、可观测性最高、成本可预算</b>的解；引入任何自治 Agent / 多 Agent 框架都会引入本项目用不上的灵活性，并付出可控性与延迟的代价。
+</div>
+
+<!-- ===================== 6 ===================== -->
+<h2>六、关键子架构设计</h2>
+
+<h3>6.1 意图识别：规则 + LLM 双层策略</h3>
+<div class="figure">
+<svg viewBox="0 0 960 250" xmlns="http://www.w3.org/2000/svg" font-family="PingFang SC,Microsoft YaHei,sans-serif">
+  <defs><marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#6b7280"/></marker></defs>
+  <rect x="30" y="100" width="120" height="50" rx="10" fill="#eff6ff" stroke="#3b82f6"/><text x="90" y="122" font-size="12" text-anchor="middle" fill="#1e3a8a" font-weight="700">用户消息</text><text x="90" y="140" font-size="10" text-anchor="middle" fill="#6b7280">chat_id + text</text>
+  <rect x="190" y="100" width="170" height="50" rx="10" fill="#ecfdf5" stroke="#10b981"/><text x="275" y="122" font-size="12" text-anchor="middle" fill="#065f46" font-weight="700">第 1 层：规则正则</text><text x="275" y="140" font-size="10" text-anchor="middle" fill="#6b7280">0ms · 零成本</text>
+  <line x1="150" y1="125" x2="188" y2="125" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <rect x="400" y="20" width="180" height="44" rx="8" fill="#fef2f2" stroke="#f87171"/><text x="490" y="38" font-size="11" text-anchor="middle" fill="#991b1b" font-weight="600">命中 off_topic</text><text x="490" y="54" font-size="10" text-anchor="middle" fill="#6b7280">conf=0.99 → 兜底+转人工</text>
+  <rect x="400" y="176" width="180" height="44" rx="8" fill="#fef2f2" stroke="#f87171"/><text x="490" y="194" font-size="11" text-anchor="middle" fill="#991b1b" font-weight="600">命中 product_qa</text><text x="490" y="210" font-size="10" text-anchor="middle" fill="#6b7280">conf=0.95 → 进主流程</text>
+  <line x1="360" y1="112" x2="398" y2="46" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <line x1="360" y1="138" x2="398" y2="194" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <rect x="610" y="100" width="170" height="50" rx="10" fill="#ede9fe" stroke="#8b5cf6"/><text x="695" y="122" font-size="12" text-anchor="middle" fill="#5b21b6" font-weight="700">第 2 层：LLM Few-shot</text><text x="695" y="140" font-size="10" text-anchor="middle" fill="#6b7280">未命中才调用</text>
+  <line x1="360" y1="125" x2="608" y2="125" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arr3)" stroke-dasharray="5 3"/>
+  <rect x="815" y="14" width="130" height="36" rx="8" fill="#ecfdf5" stroke="#6ee7b7"/><text x="880" y="36" font-size="10.5" text-anchor="middle" fill="#065f46">≥0.85 → 直取结果</text>
+  <rect x="815" y="86" width="130" height="52" rx="8" fill="#fffbeb" stroke="#fbbf24"/><text x="880" y="106" font-size="10.5" text-anchor="middle" fill="#92400e">0.60~0.85 且 off_topic</text><text x="880" y="122" font-size="10.5" text-anchor="middle" fill="#92400e">→ 保守改判 QA</text>
+  <rect x="815" y="160" width="130" height="36" rx="8" fill="#fff7ed" stroke="#fdba74"/><text x="880" y="182" font-size="10.5" text-anchor="middle" fill="#9a3412">&lt;0.60 → 澄清</text>
+  <rect x="815" y="212" width="130" height="32" rx="8" fill="#f9fafb" stroke="#d1d5db"/><text x="880" y="232" font-size="10" text-anchor="middle" fill="#6b7280">LLM 挂 → QA 兜底</text>
+  <line x1="780" y1="112" x2="813" y2="40" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr3)"/>
+  <line x1="780" y1="120" x2="813" y2="108" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr3)"/>
+  <line x1="780" y1="132" x2="813" y2="176" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr3)"/>
+  <line x1="780" y1="142" x2="813" y2="226" stroke="#6b7280" stroke-width="1.2" marker-end="url(#arr3)"/>
+</svg>
+<div class="cap">图 3 ｜ 双层意图识别：正则拦截高频 case 省 LLM 成本；中间置信区"宁可多答不漏答"（off_topic 改判 product_qa）</div>
+</div>
+
+<h3>6.2 RAG：8 步混合检索流水线</h3>
+<table>
+  <tr><th style="width:50px">步骤</th><th>环节</th><th>设计要点</th></tr>
+  <tr><td>1</td><td>Query 改写（LLM）</td><td>口语 → 标准术语，多版本改写提升召回</td></tr>
+  <tr><td>2</td><td>向量化（Embedding）</td><td>失败时降级为关键词单路</td></tr>
+  <tr><td>3</td><td>向量检索</td><td>Milvus，top_k 可配置</td></tr>
+  <tr><td>4</td><td>关键词检索</td><td>与向量互补，覆盖精确术语命中</td></tr>
+  <tr><td>5</td><td>RRF 融合排序</td><td>Reciprocal Rank Fusion，无需调权重的鲁棒融合</td></tr>
+  <tr><td>6</td><td>低分过滤</td><td>score 阈值过滤噪声，阈值由 SystemConfig 热调</td></tr>
+  <tr><td>7</td><td>上下文截断</td><td>按 token 预算截断，保护生成质量</td></tr>
+  <tr><td>8</td><td>Re-rank（预留）</td><td>接口已预留，可插入 Cross-Encoder 重排</td></tr>
+</table>
+
+<h3>6.3 其余关键机制</h3>
+<table>
+  <tr><th style="width:150px">机制</th><th>设计</th><th>解决的问题</th></tr>
+  <tr><td>记忆双写</td><td>Redis 短期记忆（TTL 24h、滑动窗口 20 条）+ MySQL 长期持久化；<code>finally</code> 块独立 Session 写入</td><td>读写分离 + 生成失败也不丢会话记录</td></tr>
+  <tr><td>降级优先</td><td>Milvus/MinIO/Redis/LLM/Embedding 全部 try-except + mock 降级路径</td><td>任何依赖故障不阻断主流程（P0 稳定性目标）</td></tr>
+  <tr><td>渠道适配层</td><td>BaseAdapter 抽象基类 + 工厂注册，新渠道 3 步注册接入</td><td>多渠道扩展不动核心代码（开闭原则）</td></tr>
+  <tr><td>配置化驱动</td><td>top_k、score 阈值、混合检索开关、兜底话术、限流上限均存 SystemConfig 表</td><td>运营调参无需发版重启</td></tr>
+  <tr><td>SSE 协议设计</td><td><code>answer</code>（逐 token）/ <code>source</code>（引用）/ <code>done</code> 三类事件</td><td>前端边渲染边展示引用出处，可追溯</td></tr>
+</table>
+
+<!-- ===================== 7 ===================== -->
+<h2>七、架构权衡（Trade-off）分析</h2>
+<table>
+  <tr><th style="width:200px">取舍点</th><th style="width:45%">获得了什么</th><th style="width:45%">牺牲了什么，如何缓解</th></tr>
+  <tr><td>固定管道 vs 自治推理</td><td>行为可预测、可审计、3 次调用成本恒定</td><td>无法处理管道外的长尾问题 → 用 ambiguous 澄清 + 转人工兜底承接</td></tr>
+  <tr><td>单 Agent vs 多 Agent</td><td>无 Agent 间通信开销，延迟低、调试简单</td><td>无法并行执行多视角分析 → 客服场景本身不需要</td></tr>
+  <tr><td>自研 vs LangChain 生态</td><td>零框架债、SSE 原生、深度定制自由</td><td>失去现成组件 → 自研成本约等于学习框架"打穿"成本，且 RAG 组件（约 8 步）自研复杂度可控</td></tr>
+  <tr><td>双层意图 vs 纯 LLM 意图</td><td>高频 case 0ms 0 成本，LLM 只处理长尾</td><td>正则需人工维护 → 通过线上 badcase 回流持续补充规则</td></tr>
+</table>
+
+<!-- ===================== 8 ===================== -->
+<h2>八、演进路线：何时升级为多 Agent 架构</h2>
+<p>当前架构不是终点，而是符合当前阶段的<b>最优解</b>。以下信号出现时，按序演进：</p>
+<table>
+  <tr><th style="width:60px">阶段</th><th style="width:280px">触发信号</th><th>演进动作</th></tr>
+  <tr><td><b>现在</b></td><td>单域客服 QA、2~3 人团队</td><td>固定管道单 Agent（当前形态）</td></tr>
+  <tr><td><b>演进 1</b></td><td>需要查订单、改工单、调 API 等<b>动作类</b>需求</td><td>引入 <b>Tool-use</b>：在管道第 3 步后挂工具调用（仍非自治，工具白名单由意图决定）</td></tr>
+  <tr><td><b>演进 2</b></td><td>扩展到售后/技术支持/营销等多域，各域知识库与话术差异大</td><td>拆为<b>路由 Agent + 域专家 Agent</b>（Supervisor 模式），域内仍是固定管道</td></tr>
+  <tr><td><b>演进 3</b></td><td>出现需要多步推理的复杂工单（如跨系统排查）</td><td>局部引入 <b>ReAct/Plan-and-Execute</b>，仅用于工单子流程，客服问答主链路保持固定管道</td></tr>
+</table>
+
+<div class="callout blue">
+  <b>演进原则</b>
+  每次演进都由<b>真实需求信号</b>驱动，而非技术追新。主链路（用户直接感知的问答）始终保持固定管道以保证可控性；Agent 化只发生在用户不可见的后台子流程中。
+</div>
+
+<h2>九、总结</h2>
+<div class="callout green">
+  <b>架构一句话</b>
+  「AI 出图产品智能客服 Agent」采用 <b>RAG + 意图路由的单体编排式 Agent 架构</b>：ChatService 作为唯一编排器，以 9 步确定性管道串联「意图识别（规则+LLM 双层）→ 混合检索 RAG（8 步流水线）→ 记忆加载 → Prompt 组装 → SSE 流式生成 → 双写持久化」，LLM 作为子任务执行器被精确调用 3 次；以<b>自研轻量编排替代 LangChain/AutoGen 等框架</b>，换取行为可控、成本可预算、链路可审计三大客服硬指标，并通过降级优先、配置化驱动、渠道适配层保证生产级稳定性与可扩展性。
+</div>
+
+<footer>AI 出图产品智能客服 Agent · 架构与框架设计说明书 v1.0 · 基于 ai-customer-backend 代码库逆向分析生成</footer>
+</div>
+</body>
+</html>

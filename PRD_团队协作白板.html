@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD · 团队协作白板 v1.0</title>
+<style>
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --accent: #6366f1;
+  --accent-light: #eef2ff;
+  --accent-dark: #4f46e5;
+  --green: #10b981;
+  --green-light: #ecfdf5;
+  --amber: #f59e0b;
+  --amber-light: #fffbeb;
+  --red: #ef4444;
+  --red-light: #fef2f2;
+  --blue: #3b82f6;
+  --blue-light: #eff6ff;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.75;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+.container { max-width: 880px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* ---------- Hero ---------- */
+.hero {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  color: #fff;
+  padding: 56px 0 48px;
+  border-radius: 0 0 24px 24px;
+  margin-bottom: 40px;
+}
+.hero-inner { max-width: 880px; margin: 0 auto; padding: 0 24px; }
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+.hero .subtitle {
+  font-size: 17px;
+  opacity: 0.88;
+  line-height: 1.6;
+  max-width: 640px;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 28px;
+  font-size: 13.5px;
+}
+.hero-meta div { opacity: 0.9; }
+.hero-meta strong { opacity: 1; font-weight: 600; }
+
+/* ---------- TOC ---------- */
+.toc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 40px;
+  box-shadow: var(--shadow);
+}
+.toc h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 14px; }
+.toc ol { list-style: none; counter-reset: toc; columns: 2; column-gap: 32px; }
+.toc li { counter-increment: toc; margin-bottom: 6px; break-inside: avoid; }
+.toc li::before {
+  content: counter(toc, decimal-leading-zero);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.toc a { text-decoration: none; color: var(--text-secondary); font-size: 14px; }
+.toc a:hover { color: var(--accent); }
+
+/* ---------- Sections ---------- */
+section { margin-bottom: 48px; scroll-margin-top: 24px; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border);
+}
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.section-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 28px 0 14px;
+}
+h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 20px 0 10px;
+}
+p { margin-bottom: 14px; color: var(--text-secondary); }
+strong { color: var(--text-primary); font-weight: 600; }
+ul, ol { margin: 0 0 16px 4px; padding-left: 22px; }
+li { margin-bottom: 8px; color: var(--text-secondary); }
+li strong { color: var(--text-primary); }
+code {
+  font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+  font-size: 13px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ---------- Callout ---------- */
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 16px 20px;
+  margin: 16px 0;
+  box-shadow: var(--shadow);
+}
+.callout-amber { border-left-color: var(--amber); background: var(--amber-light); }
+.callout-green { border-left-color: var(--green); background: var(--green-light); }
+.callout-red { border-left-color: var(--red); background: var(--red-light); }
+.callout-blue { border-left-color: var(--blue); background: var(--blue-light); }
+.callout p:last-child { margin-bottom: 0; }
+.callout-title { font-weight: 700; color: var(--text-primary); margin-bottom: 6px; font-size: 14px; }
+
+/* ---------- Quote ---------- */
+blockquote {
+  border-left: 3px solid var(--accent);
+  margin: 16px 0;
+  padding: 12px 20px;
+  background: var(--accent-light);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+blockquote p { margin-bottom: 4px; color: var(--text-secondary); }
+blockquote .quote-source { font-size: 12.5px; color: var(--text-muted); font-style: normal; margin-top: 4px; display: block; }
+
+/* ---------- Tables ---------- */
+.table-wrap { overflow-x: auto; margin: 16px 0; border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: var(--shadow); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+th { background: #f4f4f5; text-align: left; padding: 12px 16px; font-weight: 600; color: var(--text-primary); font-size: 13px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fafafa; }
+
+/* ---------- Badges ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-p0 { background: var(--red-light); color: var(--red); }
+.badge-p1 { background: var(--amber-light); color: var(--amber); }
+.badge-p2 { background: var(--blue-light); color: var(--blue); }
+.badge-mvp { background: var(--green-light); color: var(--green); }
+.badge-future { background: #f4f4f5; color: var(--text-muted); }
+
+/* ---------- Story Cards ---------- */
+.story-group {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.story-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
+}
+.story-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.story-group-header h3 { margin: 0; font-size: 17px; }
+.story-group-header .persona-desc { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+.story-item {
+  padding: 14px 16px 14px 48px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  background: #fafafa;
+  position: relative;
+  transition: background 0.15s;
+}
+.story-item:hover { background: var(--accent-light); }
+.story-item::before {
+  content: "US";
+  position: absolute;
+  left: 14px; top: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.story-text { font-size: 14.5px; color: var(--text-secondary); line-height: 1.7; }
+.story-text .role { color: var(--accent-dark); font-weight: 600; }
+.story-text .action { color: var(--text-primary); font-weight: 500; }
+.story-text .benefit { color: var(--text-secondary); }
+
+/* ---------- Metric Cards ---------- */
+.metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+}
+.metric-card .metric-type { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.metric-card .metric-name { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.metric-card .metric-target { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.metric-card .metric-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+.metric-leading { border-top: 3px solid var(--blue); }
+.metric-leading .metric-type { color: var(--blue); }
+.metric-lagging { border-top: 3px solid var(--green); }
+.metric-lagging .metric-type { color: var(--green); }
+
+/* ---------- Timeline ---------- */
+.timeline {
+  display: flex;
+  gap: 0;
+  margin: 20px 0;
+  position: relative;
+}
+.timeline-item {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  padding-top: 36px;
+}
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  top: 14px; left: 50%;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 2px var(--accent);
+  z-index: 2;
+}
+.timeline-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 19px; left: calc(50% + 8px); right: calc(-50% + 8px);
+  height: 2px;
+  background: var(--border-strong);
+}
+.timeline-item .timeline-label { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.timeline-item .timeline-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.timeline-item .timeline-desc { font-size: 12.5px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+
+/* ---------- Req Table ---------- */
+.req-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 0;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.req-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px;
+  background: #f4f4f5;
+}
+.req-header h4 { margin: 0; font-size: 15px; }
+.req-body { padding: 0 24px 16px; }
+
+/* ---------- Footer ---------- */
+.doc-footer {
+  border-top: 2px solid var(--border);
+  padding-top: 24px;
+  margin-top: 48px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.doc-footer p { color: var(--text-muted); }
+
+@media (max-width: 640px) {
+  .toc ol { columns: 1; }
+  .metric-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">📋 PRD · v1.0 · Draft</div>
+    <h1>团队协作白板<br>Team Collaboration Whiteboard</h1>
+    <p class="subtitle">为 B2B SaaS 产品打造的轻量级实时协作白板——比 Miro 更简单，比 Jamboard 更强大，深度集成产品内的任务与文档对象。</p>
+    <div class="hero-meta">
+      <div><strong>文档版本</strong> 1.0</div>
+      <div><strong>状态</strong> Draft</div>
+      <div><strong>日期</strong> 2026-08-18</div>
+      <div><strong>负责 PM</strong> ____</div>
+      <div><strong>工程负责人</strong> ____</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ===== TOC ===== -->
+<div class="toc">
+  <h3>目录</h3>
+  <ol>
+    <li><a href="#problem">问题陈述</a></li>
+    <li><a href="#goals">目标与非目标</a></li>
+    <li><a href="#stories">用户故事</a></li>
+    <li><a href="#requirements">需求（MVP vs 未来）</a></li>
+    <li><a href="#metrics">成功指标</a></li>
+    <li><a href="#tech">技术考虑与依赖</a></li>
+    <li><a href="#open">开放问题</a></li>
+    <li><a href="#timeline">时间线与里程碑</a></li>
+  </ol>
+</div>
+
+<!-- ===== 1. Problem Statement ===== -->
+<section id="problem">
+  <div class="section-header">
+    <span class="section-num">1</span>
+    <h2>问题陈述</h2>
+  </div>
+
+  <p>我们的 B2B SaaS 产品的目标用户——<strong>产品团队、设计团队和远程团队</strong>——在日常协作中频繁遇到<strong>工具切换摩擦</strong>问题。他们在产品内管理任务和文档，但一旦需要可视化的头脑风暴、流程梳理或信息架构讨论，就必须跳出产品，切换到 Miro、FigJam 等独立白板工具。</p>
+
+  <p>这种切换带来三个层面的痛点：</p>
+
+  <ul>
+    <li><strong>认知负担过重</strong>：Miro 和 FigJam 功能过于丰富（模板库、投票、计时器、视频通话、嵌入 iframe…），用户为了完成一次简单的便签讨论需要面对大量不相关的 UI 元素。<strong>"Miro 功能太多，我们只需要基础的便签和连线"</strong>。</li>
+    <li><strong>上下文断裂</strong>：白板讨论的结论无法直接关联到产品中已有的任务、文档和需求条目，用户需要在两个系统之间手动复制粘贴。<strong>"希望能直接链接到我们产品中的其他对象（任务、文档）"</strong>。</li>
+    <li><strong>协作成本高</strong>：邀请外部协作者需要额外注册/登录独立工具，降低了协作意愿和效率。用户需要<strong>实时协作</strong>能力，但并不需要视频/音频等重型实时通道。</li>
+  </ul>
+
+  <div class="callout callout-amber">
+    <div class="callout-title">⚠️ 不解决的成本</div>
+    <p>每次工具切换平均耗时 3-5 分钟（登录 + 找到目标画板 + 上下文重建）。以一个 10 人团队每周 3 次头脑风暴计算，每月浪费约 6-10 人时。更重要的是，跨工具的信息断裂导致讨论结论无法追踪回原始需求，形成<strong>决策黑箱</strong>。</p>
+  </div>
+
+  <h3>用户研究证据</h3>
+  <p>以下引述来自 5 次用户访谈（2026 年 Q1，受访者包含 2 名产品经理、2 名设计师、1 名远程团队 Lead）：</p>
+
+  <blockquote>
+    <p>"切换工具太麻烦，希望在一个地方完成所有工作"</p>
+    <span class="quote-source">— 产品经理 A，SaaS 公司，10 人团队</span>
+  </blockquote>
+  <blockquote>
+    <p>"Miro 功能太多，我们只需要基础的便签和连线"</p>
+    <span class="quote-source">— 设计师 B，远程设计团队，8 人</span>
+  </blockquote>
+  <blockquote>
+    <p>"实时协作很重要，但不需要视频/音频"</p>
+    <span class="quote-source">— 远程团队 Lead C，分布式团队，15 人</span>
+  </blockquote>
+  <blockquote>
+    <p>"希望能直接链接到我们产品中的其他对象（任务、文档）"</p>
+    <span class="quote-source">— 产品经理 D，企业 SaaS 公司，12 人团队</span>
+  </blockquote>
+  <blockquote>
+    <p>"移动端支持不重要，主要在桌面端用"</p>
+    <span class="quote-source">— 设计师 E，设计工作室，6 人</span>
+  </blockquote>
+</section>
+
+<!-- ===== 2. Goals & Non-Goals ===== -->
+<section id="goals">
+  <div class="section-header">
+    <span class="section-num">2</span>
+    <h2>目标与非目标</h2>
+  </div>
+
+  <h3>目标</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:60px;">#</th><th>目标</th><th style="width:180px;">衡量方式</th><th style="width:100px;">类型</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>G1</strong></td>
+          <td><strong>降低协作工具切换频率</strong>：用户无需离开产品即可完成可视化协作，减少对 Miro/FigJam 的依赖</td>
+          <td>月活团队中白板功能使用率 ≥ 30%</td>
+          <td><span class="badge badge-mvp">用户目标</span></td>
+        </tr>
+        <tr>
+          <td><strong>G2</strong></td>
+          <td><strong>深度使用而非浅尝辄止</strong>：白板会话不是"打开就关"，而是真正用于深度协作</td>
+          <td>白板会话平均时长 > 15 分钟</td>
+          <td><span class="badge badge-mvp">用户目标</span></td>
+        </tr>
+        <tr>
+          <td><strong>G3</strong></td>
+          <td><strong>竞品替代效应</strong>：吸引从 Miro 等外部工具迁移的团队</td>
+          <td>从 Miro 迁移过来的团队占比 > 20%</td>
+          <td><span class="badge badge-mvp">业务目标</span></td>
+        </tr>
+        <tr>
+          <td><strong>G4</strong></td>
+          <td><strong>产品粘性提升</strong>：白板成为产品内高频使用的核心模块，提升整体留存</td>
+          <td>使用白板的团队次月留存率比未使用团队高 ≥ 15%</td>
+          <td><span class="badge badge-future">业务目标</span></td>
+        </tr>
+        <tr>
+          <td><strong>G5</strong></td>
+          <td><strong>对象关联闭环</strong>：白板内容与产品内任务/文档形成双向链接，实现"讨论→决策→执行"的信息流转</td>
+          <td>≥ 40% 的白板包含至少 1 个产品对象链接</td>
+          <td><span class="badge badge-future">用户目标</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>非目标</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:60px;">#</th><th>非目标</th><th>排除理由</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>NG1</strong></td>
+          <td><strong>移动端原生支持</strong></td>
+          <td>用户研究明确指出"移动端不重要，主要在桌面端用"。移动端白板的交互复杂度高，ROI 不匹配。可在 P2 阶段评估响应式适配。</td>
+        </tr>
+        <tr>
+          <td><strong>NG2</strong></td>
+          <td><strong>视频/音频通话集成</strong></td>
+          <td>用户明确表示"实时协作很重要，但不需要视频/音频"。视频通话涉及 WebRTC 基建和合规审查，超出 2 人团队 3 个月的工程容量。应聚焦于实时画布协作。</td>
+        </tr>
+        <tr>
+          <td><strong>NG3</strong></td>
+          <td><strong>复杂图表工具集（UML、ER 图、流程图专业符号）</strong></td>
+          <td>定位是"比 Miro 简单"，核心场景是便签头脑风暴和简单连线，不是专业的架构图或 BPMN 工具。</td>
+        </tr>
+        <tr>
+          <td><strong>NG4</strong></td>
+          <td><strong>模板库 / 模板市场</strong></td>
+          <td>模板是 Miro 的核心护城河，自建模板库需要内容运营和审核流程，不适合 MVP 阶段。可在 v2 引入用户自定义模板。</td>
+        </tr>
+        <tr>
+          <td><strong>NG5</strong></td>
+          <td><strong>公开分享 / 嵌入式白板</strong></td>
+          <td>白板数据涉及企业内部信息，公开分享引入权限管理和安全合规问题。MVP 聚焦于团队内协作，外部分享作为 v2 评估项。</td>
+        </tr>
+        <tr>
+          <td><strong>NG6</strong></td>
+          <td><strong>白板 AI 助手（自动聚类、智能摘要）</strong></td>
+          <td>虽是差异化方向，但依赖额外的 LLM 调用成本和模型集成工作，不适合 MVP。可作为 v2 的创新亮点。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-blue">
+    <div class="callout-title">📌 竞品定位</div>
+    <p><strong>比 Miro 更简单</strong>——砍掉模板库、投票、计时器、视频通话等重型功能，只保留核心的便签 + 连线 + 实时协作。<strong>比 Google Jamboard 更丰富</strong>——支持产品对象链接、实时多人光标、画板组织与搜索、基础形状与文字框。我们的差异化在于<strong>与产品工作流的深度集成</strong>，而非功能数量。</p>
+  </div>
+</section>
+
+<!-- ===== 3. User Stories ===== -->
+<section id="stories">
+  <div class="section-header">
+    <span class="section-num">3</span>
+    <h2>用户故事</h2>
+  </div>
+  <p>用户故事按目标用户群体分组，每组按优先级排序。编号格式：<code>US-[组别]-[序号]</code>。</p>
+
+  <!-- Product Teams -->
+  <div class="story-group">
+    <div class="story-group-header">
+      <div class="story-icon" style="background: var(--blue-light);">📋</div>
+      <h3>产品团队</h3>
+      <span class="persona-desc">产品经理 / 产品负责人 · 使用白板进行需求梳理和优先级讨论</span>
+    </div>
+
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为产品经理</span>，我想要 <span class="action">在产品内直接创建一个白板画板来组织需求头脑风暴</span>，以便 <span class="benefit">不需要切换到外部工具就能完成需求讨论并直接在产品内追踪结论</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为产品经理</span>，我想要 <span class="action">将白板上的便签直接关联到产品中的需求条目或任务</span>，以便 <span class="benefit">讨论结论不会丢失，能追溯到具体的需求或执行项</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为产品经理</span>，我想要 <span class="action">邀请团队成员实时加入白板并看到每个人的光标位置</span>，以便 <span class="benefit">在远程环境下也能像面对面一样高效协作讨论</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为产品经理</span>，我想要 <span class="action">用连线在便签之间建立"依赖""拆分""关联"等关系</span>，以便 <span class="benefit">可视化需求之间的结构关系，帮助团队理解优先级和依赖链</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为产品经理</span>，我想要 <span class="action">将白板导出为图片并附在需求文档中</span>，以便 <span class="benefit">为不在场的利益相关者提供讨论上下文，加速决策审批</span>。</div>
+    </div>
+  </div>
+
+  <!-- Design Teams -->
+  <div class="story-group">
+    <div class="story-group-header">
+      <div class="story-icon" style="background: var(--amber-light);">🎨</div>
+      <h3>设计团队</h3>
+      <span class="persona-desc">设计师 / 设计 Lead · 使用白板进行信息架构和用户旅程梳理</span>
+    </div>
+
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为设计师</span>，我想要 <span class="action">用便签快速搭建信息架构树和用户旅程图</span>，以便 <span class="benefit">在进入高保真设计前先对齐结构和流程，减少返工</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为设计师</span>，我想要 <span class="action">用不同颜色的便签区分用户类型、页面层级和交互节点</span>，以便 <span class="benefit">在白板上一眼看出信息架构的层级和分类</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为设计师</span>，我想要 <span class="action">在白板上贴截图或设计稿并加批注连线</span>，以便 <span class="benefit">在设计评审时直接在图上标注修改方向，省去在 Figma 和聊天工具间反复跳转</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为设计师</span>，我想要 <span class="action">无限画布上自由平移和缩放查看全局和细节</span>，以便 <span class="benefit">在复杂的用户旅程中随时切换宏观和微观视角</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为设计 Lead</span>，我想要 <span class="action">将白板链接分享给产品经理和开发，无需额外注册即可查看</span>，以便 <span class="benefit">降低跨职能评审的参与门槛</span>。</div>
+    </div>
+  </div>
+
+  <!-- Remote Teams -->
+  <div class="story-group">
+    <div class="story-group-header">
+      <div class="story-icon" style="background: var(--green-light);">🌐</div>
+      <h3>远程团队</h3>
+      <span class="persona-desc">远程团队 Lead / 分布式团队成员 · 使用白板进行异步和同步协作</span>
+    </div>
+
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为远程团队 Lead</span>，我想要 <span class="action">创建一个长期存在的"团队空间"白板用于日常同步站会</span>，以便 <span class="benefit">团队有一个固定的协作锚点，不用每次重新找工具和链接</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为远程团队成员</span>，我想要 <span class="action">在白板上看到其他协作者的实时光标和操作</span>，以便 <span class="benefit">在异步和同步混合的工作模式下都能感知到团队的协作动态</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为远程团队成员</span>，我想要 <span class="action">在便签上 @提及同事来分配任务或征求意见</span>，以便 <span class="benefit">在白板讨论中直接触发通知，而不需要切到聊天工具同步信息</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为远程团队 Lead</span>，我想要 <span class="action">给白板设置权限——团队内可编辑、外部只读</span>，以便 <span class="benefit">在安全可控的前提下与外部客户或供应商协作</span>。</div>
+    </div>
+    <div class="story-item">
+      <div class="story-text"><span class="role">作为远程团队成员</span>，我想要 <span class="action">在不同白板之间搜索和快速跳转</span>，以便 <span class="benefit">管理多个项目或迭代的白板，不会因为画板太多而找不到目标</span>。</div>
+    </div>
+  </div>
+
+  <div class="callout callout-amber">
+    <div class="callout-title">⚠️ 边界场景</div>
+    <ul style="margin-bottom:0;">
+      <li><strong>空状态</strong>：新建白板时应提供空白画布 + 3 秒新手引导气泡（"双击添加便签"），而非空白页面</li>
+      <li><strong>离线/断网</strong>：实时协作断连时需提示"连接中断"，本地操作缓存，重连后自动同步</li>
+      <li><strong>冲突处理</strong>：两人同时编辑同一便签文本时，采用 CRDT Last-Write-Wins，不做复杂合并</li>
+      <li><strong>大量元素</strong>：单画板超过 500 个元素时性能降级提示，超过 2000 个阻止新增并引导拆分</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 4. Requirements ===== -->
+<section id="requirements">
+  <div class="section-header">
+    <span class="section-num">4</span>
+    <h2>需求（MVP vs 未来）</h2>
+  </div>
+  <p>采用 MoSCoW 优先级框架：<span class="badge badge-p0">P0 Must</span> = MVP 不可少；<span class="badge badge-p1">P1 Should</span> = v1 高优快跟；<span class="badge badge-p2">P2 Could</span> = 未来考虑。</p>
+
+  <!-- P0 -->
+  <div class="req-section">
+    <div class="req-header">
+      <span class="badge badge-p0">P0 · MVP</span>
+      <h4>核心画布与元素操作</h4>
+    </div>
+    <div class="req-body">
+      <div class="table-wrap" style="margin:0; border:none; box-shadow:none;">
+        <table>
+          <thead><tr><th style="width:50px;">ID</th><th>需求描述</th><th style="width:220px;">验收标准</th><th style="width:120px;">技术备注</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>R01</strong></td>
+              <td><strong>无限画布</strong>：支持自由平移（拖拽空白区域）和缩放（滚轮 / 快捷键），画布范围无固定边界。提供缩放百分比显示和"适应屏幕"快捷按钮。</td>
+              <td>
+                ✓ 画布可无限平移，无边缘碰撞<br>
+                ✓ 缩放范围 25%–400%<br>
+                ✓ "适应屏幕"按钮可一键回到全部内容视图
+              </td>
+              <td>Canvas 2D 渲染；视口虚拟化只渲染可见区域元素</td>
+            </tr>
+            <tr>
+              <td><strong>R02</strong></td>
+              <td><strong>便签（Sticky Note）</strong>：双击画布任意位置创建便签。支持文本编辑、拖拽移动、调整大小、删除。支持 5 种预设颜色（黄/蓝/绿/粉/紫）。单条便签文本上限 500 字符。</td>
+              <td>
+                ✓ 双击空白处 200ms 内出现便签并聚焦输入<br>
+                ✓ 拖拽移动时其他元素不受影响<br>
+                ✓ 颜色切换在右键菜单 / 工具栏一键完成<br>
+                ✓ 超长文本自动截断 + 展开查看
+              </td>
+              <td>元素数据模型：type/id/position/size/content/color</td>
+            </tr>
+            <tr>
+              <td><strong>R03</strong></td>
+              <td><strong>连接线（Connector）</strong>：在两个元素之间建立带箭头的连接线。连线随元素移动自动跟随。支持直线和折线两种样式。连线可添加标签文本。</td>
+              <td>
+                ✓ 从元素边缘拖拽到另一元素边缘创建连线<br>
+                ✓ 移动任一端点元素时连线自动跟随<br>
+                ✓ 双击连线可编辑标签文本<br>
+                ✓ 删除元素时其关联连线自动清除
+              </td>
+              <td>连线存储 source_id + target_id，不存储绝对坐标</td>
+            </tr>
+            <tr>
+              <td><strong>R04</strong></td>
+              <td><strong>文本框（Text Box）</strong>：独立于便签的纯文本元素，用于画布标题、分区标注。支持字号选择（S/M/L）和加粗。</td>
+              <td>
+                ✓ 工具栏点击"文本"后在画布点击放置<br>
+                ✓ 文本框无背景色，融入画布<br>
+                ✓ 支持拖拽移动和编辑
+              </td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><strong>R05</strong></td>
+              <td><strong>基础形状（Shape）</strong>：矩形和圆形两种形状，用于框选区域或标记分组。支持填充色（同便签 5 色）和边框色。</td>
+              <td>
+                ✓ 工具栏选择形状后在画布拖拽绘制<br>
+                ✓ 可调整大小和颜色<br>
+                ✓ 形状可置于便签下层（z-index 管理）
+              </td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><strong>R06</strong></td>
+              <td><strong>选择与操作</strong>：单击选中元素显示工具栏（颜色/删除/复制）。框选（空白处拖拽）可批量选择。支持 Ctrl+C / Ctrl+V 复制粘贴，Ctrl+Z / Ctrl+Shift+Z 撤销重做。</td>
+              <td>
+                ✓ 单击选中元素，显示浮动工具栏<br>
+                ✓ 空白拖拽出现蓝色选区框<br>
+                ✓ 撤销/重做支持最近 50 步操作<br>
+                ✓ 键盘 Delete 删除选中元素
+              </td>
+              <td>操作历史栈存储于前端 + 服务端同步</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="req-section">
+    <div class="req-header">
+      <span class="badge badge-p0">P0 · MVP</span>
+      <h4>实时协作与对象集成</h4>
+    </div>
+    <div class="req-body">
+      <div class="table-wrap" style="margin:0; border:none; box-shadow:none;">
+        <table>
+          <thead><tr><th style="width:50px;">ID</th><th>需求描述</th><th style="width:220px;">验收标准</th><th style="width:120px;">技术备注</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>R07</strong></td>
+              <td><strong>实时多人协作</strong>：同一白板支持多人同时编辑。每个协作者有唯一颜色的光标和昵称标签。操作在 500ms 内同步到所有客户端。</td>
+              <td>
+                ✓ 多人同时编辑时无数据丢失<br>
+                ✓ 光标位置实时同步，延迟 < 500ms<br>
+                ✓ 协作者头像/昵称显示在画布角落<br>
+                ✓ 离开时光标淡出消失
+              </td>
+              <td>基于现有实时同步架构（WebSocket + CRDT）</td>
+            </tr>
+            <tr>
+              <td><strong>R08</strong></td>
+              <td><strong>产品对象链接</strong>：在便签中可 @提及产品内的任务、文档或需求条目。被链接的对象显示为可点击的卡片嵌入便签内。点击跳转到对应对象详情页。</td>
+              <td>
+                ✓ 在便签编辑中输入 @ 触发对象搜索<br>
+                ✓ 搜索结果展示匹配的任务/文档<br>
+                ✓ 选中后对象以卡片形式嵌入便签<br>
+                ✓ 点击卡片在新标签页打开对象
+              </td>
+              <td>依赖现有搜索 API；对象卡片渲染需后端返回类型/标题/状态</td>
+            </tr>
+            <tr>
+              <td><strong>R09</strong></td>
+              <td><strong>白板组织与管理</strong>：白板从属于团队空间。支持创建、重命名、删除白板。支持列表视图（按更新时间排序）和搜索白板标题。</td>
+              <td>
+                ✓ 团队空间内有"白板"入口<br>
+                ✓ 白板列表按最后更新时间排序<br>
+                ✓ 支持按标题搜索<br>
+                ✓ 删除白板需二次确认
+              </td>
+              <td>白板元数据存储于现有 DB，复用团队权限模型</td>
+            </tr>
+            <tr>
+              <td><strong>R10</strong></td>
+              <td><strong>导出为图片</strong>：可将白板当前视图（或全部内容）导出为 PNG 图片。导出范围自动适应所有元素边界。</td>
+              <td>
+                ✓ 导出按钮在白板工具栏<br>
+                ✓ 导出图片包含全部画布元素<br>
+                ✓ 图片分辨率支持 1x / 2x
+              </td>
+              <td>前端 Canvas toDataURL 实现</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- P1 -->
+  <div class="req-section">
+    <div class="req-header">
+      <span class="badge badge-p1">P1 · v1 快跟</span>
+      <h4>体验增强（Q3 完整版）</h4>
+    </div>
+    <div class="req-body">
+      <div class="table-wrap" style="margin:0; border:none; box-shadow:none;">
+        <table>
+          <thead><tr><th style="width:50px;">ID</th><th>需求描述</th><th style="width:180px;">验收标准</th><th style="width:120px;">技术备注</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>R11</strong></td>
+              <td><strong>@提及通知</strong>：在便签中 @提及同事时发送站内通知，通知中包含白板链接和定位到具体便签的锚点。</td>
+              <td>✓ @提及触发通知中心消息<br>✓ 点击通知跳转到白板并高亮目标便签</td>
+              <td>依赖现有通知服务</td>
+            </tr>
+            <tr>
+              <td><strong>R12</strong></td>
+              <td><strong>评论批注</strong>：在任意元素上可添加评论。评论支持线程回复。评论已读/未读状态。</td>
+              <td>✓ 元素悬浮显示评论图标<br>✓ 评论可线程回复<br>✓ 已读评论标记为已读</td>
+              <td>评论数据模型需关联元素 ID</td>
+            </tr>
+            <tr>
+              <td><strong>R13</strong></td>
+              <td><strong>版本历史</strong>：自动保存白板版本快照（每次有 5+ 元素变更或间隔 10 分钟）。支持查看历史版本并恢复。</td>
+              <td>✓ 历史版本列表按时间排序<br>✓ 可预览任意历史版本<br>✓ 可恢复到指定版本</td>
+              <td>快照存储为 JSON diff，非全量复制</td>
+            </tr>
+            <tr>
+              <td><strong>R14</strong></td>
+              <td><strong>权限管理</strong>：白板支持三种角色——Owner（全权）、Editor（编辑）、Viewer（只读）。Owner 可管理成员和角色。</td>
+              <td>✓ Owner 可邀请并设置角色<br>✓ Viewer 无法编辑但可查看<br>✓ 权限变更实时生效</td>
+              <td>复用团队 RBAC 模型</td>
+            </tr>
+            <tr>
+              <td><strong>R15</strong></td>
+              <td><strong>快捷键体系</strong>：提供完整的键盘快捷键（N=便签、L=连线、T=文本、R=矩形、O=圆形、Space=平移、Ctrl+Z=撤销）。设置中可查看快捷键面板。</td>
+              <td>✓ 快捷键与工具栏功能一致<br>✓ ? 键打开快捷键面板<br>✓ 快捷键不与浏览器/系统冲突</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- P2 -->
+  <div class="req-section">
+    <div class="req-header">
+      <span class="badge badge-p2">P2 · 未来</span>
+      <h4>扩展方向（v2+，架构需预留支持）</h4>
+    </div>
+    <div class="req-body">
+      <div class="table-wrap" style="margin:0; border:none; box-shadow:none;">
+        <table>
+          <thead><tr><th style="width:50px;">ID</th><th>需求方向</th><th>架构预留要求</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>R16</strong></td>
+              <td><strong>用户自定义模板</strong>：将白板保存为模板，团队可复用。支持模板分类。</td>
+              <td>元素数据模型需支持"模板实例化"——从模板 ID 创建白板时复制元素结构</td>
+            </tr>
+            <tr>
+              <td><strong>R17</strong></td>
+              <td><strong>白板 AI 助手</strong>：自动聚类便签、生成讨论摘要、推荐下一步行动项。</td>
+              <td>元素 JSON 需为 LLM 消费做好结构化设计（类型/层级/关系标签）</td>
+            </tr>
+            <tr>
+              <td><strong>R18</strong></td>
+              <td><strong>外部嵌入 / 公开分享</strong>：生成只读公开链接或 iframe embed 代码。</td>
+              <td>权限模型需支持"匿名只读 token"和有效期管理</td>
+            </tr>
+            <tr>
+              <td><strong>R19</strong></td>
+              <td><strong>响应式移动端查看</strong>：移动端可查看和简单编辑白板（只读优先）。</td>
+              <td>Canvas 渲染层需支持触摸事件抽象；元素 hit-test 需支持触摸区域放大</td>
+            </tr>
+            <tr>
+              <td><strong>R20</strong></td>
+              <td><strong>白板 API</strong>：提供 REST API 供第三方集成，支持 CRUD 白板和元素。</td>
+              <td>后端需设计 API 版本化策略和速率限制</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. Success Metrics ===== -->
+<section id="metrics">
+  <div class="section-header">
+    <span class="section-num">5</span>
+    <h2>成功指标</h2>
+  </div>
+  <p>指标分为<strong>领先指标</strong>（上线后数天至数周即可观测，反映即时行为变化）和<strong>滞后指标</strong>（需数周至数月积累，反映长期业务影响）。每项指标设定了成功线和挑战线。</p>
+
+  <h3>领先指标</h3>
+  <div class="metric-grid">
+    <div class="metric-card metric-leading">
+      <div class="metric-type">领先 · 采纳</div>
+      <div class="metric-name">白板功能周活使用率</div>
+      <div class="metric-target">≥ 30%</div>
+      <div class="metric-desc">每周至少打开/编辑过 1 次白板的活跃团队 / 总活跃团队。<strong>挑战线 45%</strong>。发布后 4 周评估。</div>
+    </div>
+    <div class="metric-card metric-leading">
+      <div class="metric-type">领先 · 深度</div>
+      <div class="metric-name">白板会话平均时长</div>
+      <div class="metric-target">> 15 min</div>
+      <div class="metric-desc">用户从打开白板到关闭/切走的平均持续时间。<strong>挑战线 > 20 min</strong>。排除 < 30s 的误触会话。</div>
+    </div>
+    <div class="metric-card metric-leading">
+      <div class="metric-type">领先 · 激活</div>
+      <div class="metric-name">首次使用激活率</div>
+      <div class="metric-target">≥ 60%</div>
+      <div class="metric-desc">首次打开白板的用户中，在 24h 内创建至少 1 个便签的比例。<strong>挑战线 75%</strong>。</div>
+    </div>
+    <div class="metric-card metric-leading">
+      <div class="metric-type">领先 · 迁移</div>
+      <div class="metric-name">竞品迁移率</div>
+      <div class="metric-target">> 20%</div>
+      <div class="metric-desc">主动反馈"已从 Miro/FigJam 迁移到本产品白板"的团队 / 总白板使用团队。通过季度调研问卷收集。<strong>挑战线 35%</strong>。</div>
+    </div>
+  </div>
+
+  <h3>滞后指标</h3>
+  <div class="metric-grid">
+    <div class="metric-card metric-lagging">
+      <div class="metric-type">滞后 · 留存</div>
+      <div class="metric-name">白板用户次月留存提升</div>
+      <div class="metric-target">+15%</div>
+      <div class="metric-desc">使用白板功能的团队次月留存率 vs 未使用团队的差值。<strong>挑战线 +25%</strong>。发布后 8 周评估。</div>
+    </div>
+    <div class="metric-card metric-lagging">
+      <div class="metric-type">滞后 · 满意度</div>
+      <div class="metric-name">白板功能 NPS</div>
+      <div class="metric-target">≥ 40</div>
+      <div class="metric-desc">针对白板功能的专项 NPS 调研。"你有多大可能向同事推荐我们的白板功能？"<strong>挑战线 55</strong>。季度调研。</div>
+    </div>
+    <div class="metric-card metric-lagging">
+      <div class="metric-type">滞后 · 支持</div>
+      <div class="metric-name">协作工具相关工单下降</div>
+      <div class="metric-target">-30%</div>
+      <div class="metric-desc">关于"工具切换""找不到白板""无法关联任务"等工单数量同比。<strong>挑战线 -50%</strong>。月度统计。</div>
+    </div>
+    <div class="metric-card metric-lagging">
+      <div class="metric-type">滞后 · 营收</div>
+      <div class="metric-name">白板驱动的 Upsell 转化</div>
+      <div class="metric-target">TBD</div>
+      <div class="metric-desc">因白板功能触发付费升级的团队数。需在 P1 阶段确定追踪方案和基线。<strong>发布后 1 季度评估</strong>。</div>
+    </div>
+  </div>
+
+  <div class="callout callout-green">
+    <div class="callout-title">📊 评估节奏</div>
+    <ul style="margin-bottom:0;">
+      <li><strong>发布后 1 周</strong>：检查领先指标——采纳率、激活率、会话时长，快速发现体验问题</li>
+      <li><strong>发布后 1 月</strong>：中期评估——迁移率初步数据、工单变化趋势、留存信号</li>
+      <li><strong>发布后 1 季</strong>：全面评估——所有领先 + 滞后指标，决定 v2 优先级</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 6. Technical Considerations ===== -->
+<section id="tech">
+  <div class="section-header">
+    <span class="section-num">6</span>
+    <h2>技术考虑与依赖</h2>
+  </div>
+
+  <h3>架构概要</h3>
+  <p>白板功能需与<strong>现有实时同步架构</strong>兼容。核心架构决策如下：</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:160px;">层面</th><th>方案</th><th style="width:200px;">选型理由</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>画布渲染</strong></td>
+          <td>HTML Canvas 2D + 自定义渲染引擎（非 SVG DOM 操作）</td>
+          <td>500+ 元素场景下 Canvas 性能远优于 SVG DOM 操作；自定义引擎可控制虚拟化渲染</td>
+        </tr>
+        <tr>
+          <td><strong>实时同步</strong></td>
+          <td>复用现有 WebSocket 实时同步管道 + CRDT（Yjs 或自研）做操作合并</td>
+          <td>约束条件明确要求"与现有实时同步架构兼容"；CRDT 解决多人同时编辑的冲突问题</td>
+        </tr>
+        <tr>
+          <td><strong>数据模型</strong></td>
+          <td>白板 = 元素数组（JSON），每个元素含 type/id/position/size/content/metadata。整板 JSON 存储为单文档。</td>
+          <td>单文档模型简化实时同步——每次操作广播 JSON Patch 而非全量。元素级 CRDT 合并</td>
+        </tr>
+        <tr>
+          <td><strong>对象搜索</strong></td>
+          <td>复用现有搜索 API，增加 <code>type_filter=task|doc|requirement</code></td>
+          <td>@提及功能依赖现有搜索能力，不自建索引</td>
+        </tr>
+        <tr>
+          <td><strong>权限</strong></td>
+          <td>复用团队 RBAC 模型，增加 <code>whiteboard</code> 资源类型</td>
+          <td>不自建权限体系，与产品现有权限一致</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>关键技术风险</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:50px;">#</th><th>风险</th><th>影响</th><th style="width:200px;">缓解方案</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>T1</strong></td>
+          <td>Canvas 渲染在大量元素（500+）时的帧率下降</td>
+          <td>用户体验严重退化，可能放弃使用</td>
+          <td>视口虚拟化（只渲染可见区域元素）+ requestAnimationFrame 节流；超 500 元素时降级提示</td>
+        </tr>
+        <tr>
+          <td><strong>T2</strong></td>
+          <td>CRDT 实现复杂度和性能开销</td>
+          <td>同步延迟高、内存占用大</td>
+          <td>评估 Yjs（成熟开源 CRDT 库）vs 自研轻量方案；P0 先用 Last-Write-Wins，P1 引入 CRDT</td>
+        </tr>
+        <tr>
+          <td><strong>T3</strong></td>
+          <td>2 人团队 3 个月交付 MVP 的时间压力</td>
+          <td>功能范围无法按时完成</td>
+          <td>严格守住 P0 范围；P1 可延后到 Q3；每周同步进度，范围有风险立即砍 P1 保 P0</td>
+        </tr>
+        <tr>
+          <td><strong>T4</strong></td>
+          <td>@提及对象链接的数据一致性</td>
+          <td>被链接的任务/文档删除后白板出现死链</td>
+          <td>对象删除时发 webhook，白板标记死链但保留快照信息（标题+类型）</td>
+        </tr>
+        <tr>
+          <td><strong>T5</strong></td>
+          <td>导出图片的前端性能（大画布 toDataURL）</td>
+          <td>浏览器卡死或 OOM</td>
+          <td>限制导出元素数量；超大画布改为服务端渲染导出（P1 方案）</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>依赖关系</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:160px;">依赖项</th><th>类型</th><th style="width:160px;">负责方</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>现有 WebSocket 同步管道</strong></td>
+          <td><span class="badge badge-p0">P0 阻塞</span></td>
+          <td>后端团队</td>
+          <td>需确认管道支持高频增量消息（>10 msg/s/连接）。如不支持需评估扩容方案。</td>
+        </tr>
+        <tr>
+          <td><strong>搜索 API</strong></td>
+          <td><span class="badge badge-p0">P0 阻塞</span></td>
+          <td>后端团队</td>
+          <td>@提及功能依赖。需增加 type_filter 参数和 debounce 友好的响应时间（<200ms）。</td>
+        </tr>
+        <tr>
+          <td><strong>团队权限模型</strong></td>
+          <td><span class="badge badge-p0">P0 阻塞</span></td>
+          <td>后端团队</td>
+          <td>新增 whiteboard 资源类型。需确认 RBAC 扩展机制。</td>
+        </tr>
+        <tr>
+          <td><strong>通知服务</strong></td>
+          <td><span class="badge badge-p1">P1</span></td>
+          <td>后端团队</td>
+          <td>R11 @提及通知依赖。MVP 可不含通知。</td>
+        </tr>
+        <tr>
+          <td><strong>文件存储</strong></td>
+          <td><span class="badge badge-p1">P1</span></td>
+          <td>基础设施</td>
+          <td>R13 版本历史快照和 R10 服务端导出需文件存储。MVP 前端导出不需。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 7. Open Questions ===== -->
+<section id="open">
+  <div class="section-header">
+    <span class="section-num">7</span>
+    <h2>开放问题</h2>
+  </div>
+  <p>以下问题需在开发前或开发中解答。<strong>🚫 阻塞</strong> = 必须在开发启动前回答；<strong>⏳ 非阻塞</strong> = 可在开发中并行解决。</p>
+
+  <h3>工程问题</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:50px;">#</th><th style="width:60px;">状态</th><th>问题</th><th style="width:100px;">需回答方</th></tr></thead>
+      <tbody>
+        <tr><td>Q1</td><td><span class="badge badge-red">🚫 阻塞</span></td><td>现有 WebSocket 管道的消息频率上限是多少？白板实时协作可能每连接 10-30 msg/s，是否需要扩容或专用通道？</td><td>后端 Lead</td></tr>
+        <tr><td>Q2</td><td><span class="badge badge-red">🚫 阻塞</span></td><td>CRDT 选型：采用 Yjs（成熟但引入依赖）还是自研轻量 Last-Write-Wins（简单但冲突时可能丢数据）？对 MVP 的冲突频率需做评估。</td><td>前端 + 后端</td></tr>
+        <tr><td>Q3</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>白板数据存储方案：单 JSON 文档 vs 元素级行存储？大画布（2000 元素）的查询和加载性能如何保证？</td><td>后端</td></tr>
+        <tr><td>Q4</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>离线编辑缓存策略：断网超过多久后本地缓存失效？重连冲突如何提示用户？</td><td>前端</td></tr>
+        <tr><td>Q5</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>Canvas 渲染引擎自建 vs 使用开源库（如 Excalidraw 底层 / tldraw）？自建可控但耗时，开源快但可能受限。</td><td>前端 + PM</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>设计问题</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:50px;">#</th><th style="width:60px;">状态</th><th>问题</th><th style="width:100px;">需回答方</th></tr></thead>
+      <tbody>
+        <tr><td>Q6</td><td><span class="badge badge-red">🚫 阻塞</span></td><td>白板入口在哪里？是顶级导航项还是从属于"团队空间"子菜单？入口位置直接影响采纳率。</td><td>PM + 设计</td></tr>
+        <tr><td>Q7</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>空状态设计：新白板是完全空白还是预置 1-2 个引导便签（"双击添加你的第一个便签"）？</td><td>设计</td></tr>
+        <tr><td>Q8</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>协作者光标颜色分配策略：固定颜色池还是基于用户 ID hash？最多支持多少同时在线协作者？</td><td>设计 + 前端</td></tr>
+        <tr><td>Q9</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>白板与产品其他模块的视觉一致性：是否沿用产品现有 Design System 的颜色/字体/圆角？还是白板作为"画布"有独立的视觉语言？</td><td>设计 Lead</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>法律与合规问题</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:50px;">#</th><th style="width:60px;">状态</th><th>问题</th><th style="width:100px;">需回答方</th></tr></thead>
+      <tbody>
+        <tr><td>Q10</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>白板内容的数据驻留要求：企业客户的白板数据是否需存储在指定区域（如欧盟客户数据不离开欧盟）？</td><td>法务 + 基础设施</td></tr>
+        <tr><td>Q11</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>白板导出图片的版权归属：导出的图片版权归创建者还是团队？需在产品 Terms of Service 中明确。</td><td>法务</td></tr>
+        <tr><td>Q12</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>白板审计日志：企业客户是否需要白板操作的审计日志（谁在何时创建/编辑/删除了白板）？合规要求等级？</td><td>法务 + 安全</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>数据问题</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th style="width:50px;">#</th><th style="width:60px;">状态</th><th>问题</th><th style="width:100px;">需回答方</th></tr></thead>
+      <tbody>
+        <tr><td>Q13</td><td><span class="badge badge-red">🚫 阻塞</span></td><td>成功指标的埋点方案：白板会话时长的定义——是浏览器 Tab 活跃时间还是白板 Canvas 交互时间（鼠标在画布区域内）？后者更准确但需前端额外埋点。</td><td>数据 + 前端</td></tr>
+        <tr><td>Q14</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>迁移率（从 Miro 迁移）的数据来源：用户调研问卷 vs 行为数据推断（如导入 Miro 文件）？后者更客观但需 P1 支持导入功能。</td><td>数据 + PM</td></tr>
+        <tr><td>Q15</td><td><span class="badge badge-amber">⏳ 非阻塞</span></td><td>对象链接率（G5）的追踪：如何区分"白板中包含对象链接"和"用户点击了对象链接"？需定义埋点事件。</td><td>数据</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== 8. Timeline ===== -->
+<section id="timeline">
+  <div class="section-header">
+    <span class="section-num">8</span>
+    <h2>时间线与里程碑</h2>
+  </div>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-label">Q1 · 2026.03</div>
+      <div class="timeline-title">用户研究</div>
+      <div class="timeline-desc">5 次访谈完成<br>问题验证 ✓</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Q1 · 2026.04</div>
+      <div class="timeline-title">PRD 评审</div>
+      <div class="timeline-desc">本文档评审<br>开放问题 Q1-Q2 解决</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Q2 · 2026.04-06</div>
+      <div class="timeline-title">MVP 开发</div>
+      <div class="timeline-desc">2 人 × 3 个月<br>P0 范围 R01-R10</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Q2 · 2026.06</div>
+      <div class="timeline-title">MVP 发布</div>
+      <div class="timeline-desc">内部 Dogfood 2 周<br>灰度 25% → 100%</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-label">Q3 · 2026.07-09</div>
+      <div class="timeline-title">完整版发布</div>
+      <div class="timeline-desc">P1 范围 R11-R15<br>1 月全面评估指标</div>
+    </div>
+  </div>
+
+  <div class="callout callout-red">
+    <div class="callout-title">⚠️ 关键路径风险</div>
+    <p>MVP 发布（Q2 末）依赖 Q1 的两个阻塞问题（Q1 WebSocket 容量、Q2 CRDT 选型）必须在 4 月初前解决。如任一阻塞超期，MVP 将延后到 Q3 初，完整版顺延到 Q4。建议在 PRD 评审时同步后端 Lead 确认时间线。</p>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<div class="doc-footer">
+  <p>本 PRD 由 Feature Spec 工作流生成 · 基于 5 次用户访谈与竞品分析</p>
+  <p>文档版本 1.0 · 2026-08-18 · 下次评审：开发启动前</p>
+</div>
+
+</div>
+</body>
+</html>
