@@ -14,11 +14,15 @@ class LoginRequest(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    """注册请求。"""
+    """注册请求。
+
+    安全约束：匿名注册端点仅允许创建普通用户；role 固定为 "user"，
+    服务端（AuthService.register）会再次强制覆盖，双重防提权。
+    """
 
     username: str = Field(..., min_length=3, max_length=64)
     password: str = Field(..., min_length=6, max_length=128)
-    role: str = Field(default="user", pattern="^(user|admin)$")
+    role: str = Field(default="user", pattern="^user$")
 
 
 class UserInfo(BaseModel):

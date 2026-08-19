@@ -251,14 +251,21 @@ class AuthService:
             return None
 
     async def register(self, username: str, password: str, role: str = "user") -> User:
-        """注册新用户。"""
+        """注册新用户。
+
+        安全约束：注册接口为匿名端点（JWT 白名单），服务端强制 role="user"，
+        忽略客户端传入的任何角色值，防止匿名自提权为管理员。
+        管理员账号只能通过启动时的内置账号或已有管理员创建。
+        """
+        if role and role != "user":
+            logger.warning("Register attempt with non-user role=%r — forced to 'user'", role)
         existing = await self.get_user_by_username(username)
         if existing is not None:
             raise AuthError("用户名已存在")
         user = User(
             username=username,
             password_hash=self.hash_password(password),
-            role=role if role in ("user", "admin") else "user",
+            role="user",
             status=1,
         )
         self.db.add(user)
