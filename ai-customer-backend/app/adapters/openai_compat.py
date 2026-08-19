@@ -292,7 +292,7 @@ async def _stream_openai_format(
     except Exception as e:
         logger.exception("OpenAI stream failed: %s", e)
         err_chunk = make_openai_chunk(
-            content=f"\n\n[error: {e}]",
+            content="\n\n[生成回答时出错，请稍后重试]",
             model=model_name,
             completion_id=completion_id,
         )

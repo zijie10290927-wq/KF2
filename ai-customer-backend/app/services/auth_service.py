@@ -110,7 +110,8 @@ class AuthService:
             )
             return payload
         except JWTError as e:
-            raise AuthError(f"Token 无效或已过期: {e}")
+            logger.warning("JWT decode failed: %s", e)
+            raise AuthError("Token 无效或已过期，请重新登录") from e
 
     async def verify_token(self, token: str) -> dict:
         """解码 JWT → 检查 Redis 黑名单 → 返回 payload。

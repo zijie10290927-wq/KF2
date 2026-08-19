@@ -196,9 +196,9 @@ class ChatService:
                         full_answer_parts.append(token)
                         yield make_answer_event(token)
             except Exception as e:
-                logger.error("LLM stream failed: %s", e)
+                logger.error("LLM stream failed: %s", e, exc_info=True)
                 error_occurred = True
-                yield make_error_event(f"生成回答时出错: {e}")
+                yield make_error_event("生成回答时出错，请稍后重试")
                 # 即使出错，也保存已生成的部分回答（如果有）
                 return
 
@@ -206,9 +206,9 @@ class ChatService:
             yield make_done_event(message_id=assistant_message_id)
 
         except Exception as e:
-            logger.exception("ChatService stream failed")
+            logger.exception("ChatService stream failed: %s", e)
             error_occurred = True
-            yield make_error_event(f"处理失败: {e}")
+            yield make_error_event("处理失败，请稍后重试")
 
         finally:
             # Step 9: 双写存储（使用独立 AsyncSession 防止主会话关闭导致写入失败）

@@ -137,7 +137,8 @@ class ZhiboAdapter(BaseAdapter):
         try:
             payload = json.loads(raw_body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
-            raise AdapterAuthError(f"解析智齿 Webhook 体失败: {e}") from e
+            logger.warning("Parse zhibo webhook body failed: %s", e)
+            raise AdapterAuthError("Webhook body 必须为合法的 UTF-8 JSON") from e
 
         event = payload.get("event") or payload.get("type") or ""
         # 非消息事件标记跳过

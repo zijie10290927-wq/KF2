@@ -97,7 +97,8 @@ class GenericAdapter(BaseAdapter):
         try:
             payload = json.loads(raw_body.decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
-            raise AdapterAuthError(f"解析 Webhook 体失败: {e}") from e
+            logger.warning("Parse webhook body failed: %s", e)
+            raise AdapterAuthError("Webhook body 必须为合法的 UTF-8 JSON") from e
 
         if not isinstance(payload, dict):
             raise AdapterAuthError("Webhook body 必须为 JSON 对象")

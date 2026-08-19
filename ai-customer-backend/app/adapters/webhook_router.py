@@ -116,10 +116,10 @@ async def receive_webhook(
                 content={"code": 403, "message": "签名验证失败", "data": None},
             )
     except Exception as e:
-        logger.warning("Verify signature failed (platform=%s): %s", platform, e)
+        logger.warning("Verify signature failed (platform=%s): %s", platform, e, exc_info=True)
         return JSONResponse(
             status_code=403,
-            content={"code": 403, "message": f"签名验证异常: {e}", "data": None},
+            content={"code": 403, "message": "签名验证失败", "data": None},
         )
 
     # Step 4: 解析消息
@@ -131,10 +131,10 @@ async def receive_webhook(
             content={"code": 400, "message": str(e), "data": None},
         )
     except Exception as e:
-        logger.warning("Parse incoming failed (platform=%s): %s", platform, e)
+        logger.warning("Parse incoming failed (platform=%s): %s", platform, e, exc_info=True)
         return JSONResponse(
             status_code=400,
-            content={"code": 400, "message": f"消息解析失败: {e}", "data": None},
+            content={"code": 400, "message": "消息解析失败，请检查推送格式", "data": None},
         )
 
     # Step 5: 跳过非消息事件
@@ -172,10 +172,10 @@ async def receive_webhook(
             metadata=parsed.get("metadata"),
         )
     except Exception as e:
-        logger.error("Session mapper failed: %s", e)
+        logger.error("Session mapper failed: %s", e, exc_info=True)
         return JSONResponse(
             status_code=500,
-            content={"code": 500, "message": f"会话映射失败: {e}", "data": None},
+            content={"code": 500, "message": "会话映射失败，请稍后重试", "data": None},
         )
 
     # Step 8: 异步处理

@@ -4,9 +4,12 @@ SSE 事件格式：`event: {type}\ndata: {json}\n\n`（必须以双换行结尾�
 """
 
 import json
+import logging
 from typing import AsyncGenerator
 
 from app.schemas.chat import SSEEvent
+
+logger = logging.getLogger(__name__)
 
 
 def sse_pack(event: SSEEvent) -> bytes:
@@ -37,7 +40,8 @@ async def sse_stream(async_iter: AsyncGenerator[SSEEvent, None]) -> AsyncGenerat
         async for event in async_iter:
             yield sse_pack(event)
     except Exception as e:  # pragma: no cover
-        err = SSEEvent(type="error", message=f"流式生成异常: {e}")
+        logger.exception("SSE stream wrapper failed: %s", e)
+        err = SSEEvent(type="error", message="流式生成异常，请稍后重试")
         yield sse_pack(err)
 
 

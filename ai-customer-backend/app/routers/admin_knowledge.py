@@ -71,8 +71,8 @@ async def upload_document(
             overlap=overlap or None,
         )
     except Exception as e:
-        logger.error("Upload document failed: %s", e)
-        return ApiResponse.error(message=f"上传失败: {e}")
+        logger.error("Upload document failed: %s", e, exc_info=True)
+        return ApiResponse.error(message="上传失败，请稍后重试或联系管理员")
 
     # 4. 后台触发处理流水线（从 MinIO 拉文件，避免 UploadFile 已关闭）
     background_tasks.add_task(

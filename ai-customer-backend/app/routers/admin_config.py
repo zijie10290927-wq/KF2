@@ -93,8 +93,8 @@ async def create_model(
         )
     except Exception as e:
         # 唯一键冲突等
-        logger.error("Create model failed: %s", e)
-        return ApiResponse.error(message=f"新增失败: {e}")
+        logger.error("Create model failed: %s", e, exc_info=True)
+        return ApiResponse.error(message="新增失败，请检查参数后重试")
     return ApiResponse.success(
         data=_model_to_out(model), message="模型配置已新增"
     )

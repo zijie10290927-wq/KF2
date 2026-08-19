@@ -88,9 +88,10 @@ async def widget_embed_js() -> PlainTextResponse:
             },
         )
     except Exception as e:
-        logger.error("Read widget sdk failed: %s", e)
+        logger.error("Read widget sdk failed: %s", e, exc_info=True)
         return PlainTextResponse(
-            content=f"// load error: {e}", media_type="application/javascript"
+            content="// widget script load failed, please retry later",
+            media_type="application/javascript",
         )
 
 
