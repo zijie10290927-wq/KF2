@@ -38,6 +38,14 @@ artifacts/
 
 # ===== 一次性调试脚本（直连数据库，不入库）=====
 ai-customer-backend/_check_*.py
+scripts/debug_save_config*.py
+
+# ===== 根目录测试产物（含 JWT token 等敏感信息，严禁入库）=====
+test-state.json
+*.local.json
+api-test-results.json
+api-test-temp.json
+login_resp.json
 
 # ===== 日志 =====
 *.log
