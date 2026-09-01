@@ -1,0 +1,550 @@
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg3OTg3MTA4LCJpYXQiOjE3ODc5MDA3MDh9.W7fs9gZMW8ZvGWa4HDj0MG7KxLNvCQJkvmrkX_T5sOI",
+  "sid": "ac30cacb-b742-4f5e-bbec-3b19eab731cb",
+  "results": {
+    "1": {
+      "label": "GET /health",
+      "code": 200,
+      "body": {
+        "status": "ok"
+      }
+    },
+    "2": {
+      "label": "POST /auth/login (admin/admin123)",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg3OTg3MTA4LCJpYXQiOjE3ODc5MDA3MDh9.W7fs9gZMW8ZvGWa4HDj0MG7KxLNvCQJkvmrkX_T5sOI",
+          "token_type": "bearer",
+          "expires_in": 86400,
+          "user": {
+            "id": 1,
+            "username": "admin",
+            "role": "admin",
+            "status": 1,
+            "created_at": "2026-08-18T04:12:32"
+          }
+        }
+      }
+    },
+    "3": {
+      "label": "GET /auth/me",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "id": 1,
+          "username": "admin",
+          "role": "admin",
+          "status": 1,
+          "created_at": "2026-08-18T04:12:32"
+        }
+      }
+    },
+    "4": {
+      "label": "POST /chat/sessions {title}",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "session_id": "ac30cacb-b742-4f5e-bbec-3b19eab731cb",
+          "title": "审查测试会话",
+          "status": "active",
+          "created_at": "2026-08-28T07:05:13"
+        }
+      }
+    },
+    "5": {
+      "label": "GET /chat/sessions",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": [
+          {
+            "session_id": "ac30cacb-b742-4f5e-bbec-3b19eab731cb",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-28T07:05:13"
+          },
+          {
+            "session_id": "e8d60475-d938-4dd7-a7a6-9cc761da2c92",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-28T07:03:36"
+          },
+          {
+            "session_id": "71e60680-9f6b-4a66-8aac-2c45c0638ff1",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-28T07:02:18"
+          },
+          {
+            "session_id": "e3a86f92-90a0-4597-bc77-cfd1845574f6",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-28T06:50:23"
+          },
+          {
+            "session_id": "35e82483-defa-4906-b3dc-8828055f2909",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-28T06:48:11"
+          },
+          {
+            "session_id": "7e5305c7-b40f-4538-9308-9e1eb9a3a44e",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-28T06:47:00"
+          },
+          {
+            "session_id": "d2297446-7ed9-46af-b64d-d427940b9ece",
+            "title": "测试DeepSeek调用",
+            "status": "active",
+            "created_at": "2026-08-28T03:53:26"
+          },
+          {
+            "session_id": "40d91b68-d77c-46d1-a7fb-fa3fdbf5e78c",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-28T03:45:25"
+          },
+          {
+            "session_id": "a465f38d-4198-4973-815a-770f31754c37",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-27T08:19:47"
+          },
+          {
+            "session_id": "534a44b8-f66d-4570-9b6f-298bfe99d595",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-27T07:45:38"
+          },
+          {
+            "session_id": "caffc86a-9768-41c8-a561-dad1171a94b4",
+            "title": "LLM验证对话",
+            "status": "active",
+            "created_at": "2026-08-27T04:42:56"
+          },
+          {
+            "session_id": "dc93a450-6164-4179-9faa-1d9409bee014",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-27T03:03:47"
+          },
+          {
+            "session_id": "aeb8ca72-797f-47e2-9b38-89993411f09e",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-27T03:00:05"
+          },
+          {
+            "session_id": "5181006a-7ab3-4544-b310-a14d61a123ae",
+            "title": "smoke-check",
+            "status": "active",
+            "created_at": "2026-08-26T08:28:25"
+          },
+          {
+            "session_id": "2942232f-7c7f-416a-a59a-78e5e533d045",
+            "title": "smoke-check",
+            "status": "active",
+            "created_at": "2026-08-26T08:27:59"
+          },
+          {
+            "session_id": "b484c1c4-4922-4036-8b0b-0e494a7c6014",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-25T10:11:10"
+          },
+          {
+            "session_id": "c8644fc9-487d-4aac-8df5-5a88e170286e",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-25T05:59:36"
+          },
+          {
+            "session_id": "108528cd-da4c-401e-875d-d55fae9b90ef",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-25T02:49:41"
+          },
+          {
+            "session_id": "44566f8e-db8a-4ff0-80c9-52b56ec5cc2b",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-24T07:52:36"
+          },
+          {
+            "session_id": "5b94d84c-197a-48a9-9378-35d3b4c51bf0",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-24T02:50:44"
+          },
+          {
+            "session_id": "3a9fc19e-f106-4534-9b6c-edbcc16ad16d",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-24T02:20:55"
+          },
+          {
+            "session_id": "5189398b-a496-46e0-b108-db46e70f0720",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-24T02:20:45"
+          },
+          {
+            "session_id": "cb656181-9291-4750-ab18-454d2e8e2212",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-24T02:11:46"
+          },
+          {
+            "session_id": "da131c04-5ff2-4561-a751-d083322a951a",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-22T08:36:20"
+          },
+          {
+            "session_id": "c8b670cb-5bfc-458d-9122-c9e6806e00e7",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-22T08:28:28"
+          },
+          {
+            "session_id": "bf3be674-4c7c-45d2-84d6-f8c8652760f6",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-22T08:28:17"
+          },
+          {
+            "session_id": "fecc0e4e-4d7e-4a16-99e2-e74c72d1647e",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-21T09:24:58"
+          },
+          {
+            "session_id": "e029eeee-f882-4023-9dfe-73f60da53834",
+            "title": "DeepSeek测试",
+            "status": "active",
+            "created_at": "2026-08-21T08:13:19"
+          },
+          {
+            "session_id": "9e87169c-4867-4a57-8bf7-9d262b7619b8",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-21T07:36:17"
+          },
+          {
+            "session_id": "d0afcd9c-2854-4cd3-9e64-03e3e1f9b834",
+            "title": "DeepSeek测试",
+            "status": "active",
+            "created_at": "2026-08-21T07:01:40"
+          },
+          {
+            "session_id": "b436d077-ff3f-4fdf-a828-fdc6cb3980a7",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-21T06:48:13"
+          },
+          {
+            "session_id": "75308333-8cd9-49d7-9c1d-fd2f2465a1fc",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-20T10:24:54"
+          },
+          {
+            "session_id": "86aca211-6a67-4c8b-b645-f429858530c1",
+            "title": "知识库冒烟2-17:46:26",
+            "status": "active",
+            "created_at": "2026-08-20T09:46:28"
+          },
+          {
+            "session_id": "f4d9cf5a-5edc-4e7b-8523-73afc72765b6",
+            "title": "知识库冒烟测试 17:44:24",
+            "status": "active",
+            "created_at": "2026-08-20T09:44:26"
+          },
+          {
+            "session_id": "1c8cf1e4-f352-46e5-bdcc-a963964f5812",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-18T09:19:53"
+          },
+          {
+            "session_id": "d4f65e63-37b4-4646-b339-95a1c9e84564",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-18T07:15:06"
+          },
+          {
+            "session_id": "471811bb-3206-42fa-97a3-ac9f85c55fd9",
+            "title": "SSE-test",
+            "status": "active",
+            "created_at": "2026-08-18T06:53:43"
+          },
+          {
+            "session_id": "06ee8dd6-9877-4af3-9e55-07e4553e0992",
+            "title": "SSE测试",
+            "status": "active",
+            "created_at": "2026-08-18T06:53:21"
+          },
+          {
+            "session_id": "3cb1e86e-3642-4228-be8f-93528299d755",
+            "title": "SSE测试",
+            "status": "active",
+            "created_at": "2026-08-18T06:52:55"
+          },
+          {
+            "session_id": "475a6518-9162-4468-b29e-987aa1c03789",
+            "title": "测试对话",
+            "status": "active",
+            "created_at": "2026-08-18T06:23:59"
+          },
+          {
+            "session_id": "b20a5cfd-6583-4e1b-aabf-4f385397a3bc",
+            "title": "测试对话",
+            "status": "active",
+            "created_at": "2026-08-18T06:23:06"
+          },
+          {
+            "session_id": "bb49cd87-6fec-4999-b140-a888fa0ff8c0",
+            "title": "测试对话",
+            "status": "active",
+            "created_at": "2026-08-18T06:22:28"
+          },
+          {
+            "session_id": "0c3b1c07-2ee5-4af9-8328-0f14dac770f1",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-18T05:54:26"
+          },
+          {
+            "session_id": "68a45d69-8101-4028-92b3-3d66279b716e",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-18T05:54:26"
+          },
+          {
+            "session_id": "d00dae70-901a-4ce4-b58c-14ad7d3c85fe",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-18T05:54:26"
+          },
+          {
+            "session_id": "fddc01b5-ac1d-4282-94c8-e1bc9dcc88fe",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-18T05:54:26"
+          },
+          {
+            "session_id": "32dc0cee-e9b6-4f3b-8257-81899a5bd122",
+            "title": "新对话",
+            "status": "active",
+            "created_at": "2026-08-18T05:03:18"
+          },
+          {
+            "session_id": "1b48ad6a-8edb-4b20-9aeb-7d2d740a90d7",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-18T04:56:03"
+          },
+          {
+            "session_id": "2dfd7576-ce44-4c42-a035-d6d74f014ffb",
+            "title": "审查测试会话",
+            "status": "active",
+            "created_at": "2026-08-18T04:54:40"
+          },
+          {
+            "session_id": "38b86f9b-338a-41d8-86de-b646efcfffc3",
+            "title": "测试对话",
+            "status": "active",
+            "created_at": "2026-08-18T04:15:31"
+          }
+        ]
+      }
+    },
+    "6": {
+      "label": "GET /chat/sessions/ac30cacb-b742-4f5e-bbec-3b19eab731cb/messages",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "list": [],
+          "total": 0,
+          "page": 1,
+          "page_size": 20
+        }
+      }
+    },
+    "7": {
+      "label": "POST /chat/transfer-human",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "transfer_status": "ok",
+          "human_service_url": "",
+          "phone": "400-888-9999",
+          "message": "已为您转接人工客服，请稍候"
+        }
+      }
+    },
+    "8": {
+      "label": "GET /admin/config/fallback",
+      "code": 404,
+      "body": {
+        "code": 404,
+        "message": "Not Found",
+        "data": null
+      }
+    },
+    "9": {
+      "label": "GET /knowledge/docs",
+      "code": 404,
+      "body": {
+        "code": 404,
+        "message": "Not Found",
+        "data": null
+      }
+    },
+    "10": {
+      "label": "GET /admin/models",
+      "code": 404,
+      "body": {
+        "code": 404,
+        "message": "Not Found",
+        "data": null
+      }
+    },
+    "11": {
+      "label": "GET /admin/users",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "list": [
+            {
+              "id": 6,
+              "username": "test_user_review",
+              "role": "user",
+              "status": 1,
+              "created_at": "2026-08-28T06:47:26",
+              "updated_at": "2026-08-28T06:47:26"
+            },
+            {
+              "id": 5,
+              "username": "test_admin",
+              "role": "user",
+              "status": 1,
+              "created_at": "2026-08-28T03:01:16",
+              "updated_at": "2026-08-28T03:01:16"
+            },
+            {
+              "id": 4,
+              "username": "123",
+              "role": "admin",
+              "status": 1,
+              "created_at": "2026-08-18T09:22:15",
+              "updated_at": "2026-08-18T09:22:53"
+            },
+            {
+              "id": 3,
+              "username": "test_user_358630",
+              "role": "user",
+              "status": 0,
+              "created_at": "2026-08-18T04:59:20",
+              "updated_at": "2026-08-18T09:23:00"
+            },
+            {
+              "id": 2,
+              "username": "demo",
+              "role": "user",
+              "status": 1,
+              "created_at": "2026-08-18T04:12:32",
+              "updated_at": "2026-08-18T04:12:32"
+            },
+            {
+              "id": 1,
+              "username": "admin",
+              "role": "admin",
+              "status": 1,
+              "created_at": "2026-08-18T04:12:32",
+              "updated_at": "2026-08-18T04:12:32"
+            }
+          ],
+          "total": 6,
+          "page": 1,
+          "page_size": 20
+        }
+      }
+    },
+    "12": {
+      "label": "openapi.json",
+      "size": 46947
+    },
+    "13": {
+      "label": "GET /auth/me (no token, expect 401/unauth)",
+      "code": 401,
+      "body": {
+        "code": 401,
+        "message": "请先登录",
+        "data": null
+      }
+    },
+    "14": {
+      "label": "POST /auth/login wrong password",
+      "code": 401,
+      "body": {
+        "code": 401,
+        "message": "用户名或密码错误",
+        "data": null
+      }
+    },
+    "15": {
+      "label": "GET /chat/sessions (no token, expect 401/unauth)",
+      "code": 401,
+      "body": {
+        "code": 401,
+        "message": "请先登录",
+        "data": null
+      }
+    },
+    "16": {
+      "label": "POST /auth/register (test_user_xx / 123456)",
+      "code": 401,
+      "body": {
+        "code": 401,
+        "message": "用户名已存在",
+        "data": null
+      }
+    },
+    "17": {
+      "label": "POST /auth/login as test_user_review",
+      "code": 200,
+      "body": {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJ1c2VybmFtZSI6InRlc3RfdXNlcl9yZXZpZXciLCJyb2xlIjoidXNlciIsImV4cCI6MTc4Nzk4NzE0MCwiaWF0IjoxNzg3OTAwNzQwfQ.3XTTTiO9pNlRUJyyAYGOM-lPeKugp1LC-KO3hU8eUzA",
+          "token_type": "bearer",
+          "expires_in": 86400,
+          "user": {
+            "id": 6,
+            "username": "test_user_review",
+            "role": "user",
+            "status": 1,
+            "created_at": "2026-08-28T06:47:26"
+          }
+        }
+      }
+    }
+  }
+}

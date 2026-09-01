@@ -1,0 +1,338 @@
+
+=== 1. GET /health ===
+HTTP 200
+{
+  "status": "ok"
+}
+
+=== 2. POST /auth/login (admin/admin123) ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzg3OTg3MDEyLCJpYXQiOjE3ODc5MDA2MTJ9.ipnpPzDrOJmGYNtzQg_mMgABD5A9QaweG9RyHiCbcXo",
+    "token_type": "bearer",
+    "expires_in": 86400,
+    "user": {
+      "id": 1,
+      "username": "admin",
+      "role": "admin",
+      "status": 1,
+      "created_at": "2026-08-18T04:12:32"
+    }
+  }
+}
+  -> token length: 189
+  -> has user_info (backend key): False
+  -> has user (frontend expects): True
+
+=== 3. GET /auth/me ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "id": 1,
+    "username": "admin",
+    "role": "admin",
+    "status": 1,
+    "created_at": "2026-08-18T04:12:32"
+  }
+}
+  -> keys in me data: ['id', 'username', 'role', 'status', 'created_at']
+
+=== 4. POST /chat/sessions {title} ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "session_id": "e8d60475-d938-4dd7-a7a6-9cc761da2c92",
+    "title": "审查测试会话",
+    "status": "active",
+    "created_at": "2026-08-28T07:03:36"
+  }
+}
+  -> session_id: e8d60475-d938-4dd7-a7a6-9cc761da2c92
+
+=== 5. GET /chat/sessions ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": [
+    {
+      "session_id": "e8d60475-d938-4dd7-a7a6-9cc761da2c92",
+      "title": "审查测试会话",
+      "status": "active",
+      "created_at": "2026-08-28T07:03:36"
+    },
+    {
+      "session_id": "71e60680-9f6b-4a66-8aac-2c45c0638ff1",
+      "title": "审查测试会话",
+      "status": "active",
+      "created_at": "2026-08-28T07:02:18"
+    },
+    {
+      "session_id": "e3a86f92-90a0-4597-bc77-cfd1845574f6",
+      "title": "审查测试会话",
+      "status": "active",
+      "created_at": "2026-08-28T06:50:23"
+    },
+    {
+      "session_id": "35e82483-defa-4906-b3dc-8828055f2909",
+      "title": "审查测试会话",
+      "status": "active",
+      "created_at": "2026-08-28T06:48:11"
+    },
+    {
+      "session_id": "7e5305c7-b40f-4538-9308-9e1eb9a3a44e",
+      "title": "审查测试会话",
+      "status": "active",
+      "created_at": "2026-08-28T06:47:00"
+    },
+    {
+      "session_id": "d2297446-7ed9-46af-b64d-d427940b9ece",
+      "title": "测试DeepSeek调用",
+      "status": "active",
+      "created_at": "2026-08-28T03:53:26"
+    },
+    {
+      "session_id": "40d91b68-d77c-46d1-a7fb-fa3fdbf5e78c",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-28T03:45:25"
+    },
+    {
+      "session_id": "a465f38d-4198-4973-815a-770f31754c37",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-27T08:19:47"
+    },
+    {
+      "session_id": "534a44b8-f66d-4570-9b6f-298bfe99d595",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-27T07:45:38"
+    },
+    {
+      "session_id": "caffc86a-9768-41c8-a561-dad1171a94b4",
+      "title": "LLM验证对话",
+      "status": "active",
+      "created_at": "2026-08-27T04:42:56"
+    },
+    {
+      "session_id": "dc93a450-6164-4179-9faa-1d9409bee014",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-27T03:03:47"
+    },
+    {
+      "session_id": "aeb8ca72-797f-47e2-9b38-89993411f09e",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-27T03:00:05"
+    },
+    {
+      "session_id": "5181006a-7ab3-4544-b310-a14d61a123ae",
+      "title": "smoke-check",
+      "status": "active",
+      "created_at": "2026-08-26T08:28:25"
+    },
+    {
+      "session_id": "2942232f-7c7f-416a-a59a-78e5e533d045",
+      "title": "smoke-check",
+      "status": "active",
+      "created_at": "2026-08-26T08:27:59"
+    },
+    {
+      "session_id": "b484c1c4-4922-4036-8b0b-0e494a7c6014",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-25T10:11:10"
+    },
+    {
+      "session_id": "c8644fc9-487d-4aac-8df5-5a88e170286e",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-25T05:59:36"
+    },
+    {
+      "session_id": "108528cd-da4c-401e-875d-d55fae9b90ef",
+      "title": "新对话",
+      "status": "active",
+      "created_at": "2026-08-25T02:49:41"
+    },
+    {
+      "session_id": "44566f8e-db8a-4ff0-80c9-52b56ec5cc2b",
+      "title": "新对话",
+      "status": "active",
+      "created_at": 
+
+=== 6. GET /chat/sessions/e8d60475-d938-4dd7-a7a6-9cc761da2c92/messages ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "list": [],
+    "total": 0,
+    "page": 1,
+    "page_size": 20
+  }
+}
+
+=== 7. POST /chat/transfer-human ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "transfer_status": "ok",
+    "human_service_url": "",
+    "phone": "400-888-9999",
+    "message": "已为您转接人工客服，请稍候"
+  }
+}
+
+=== 8. GET /admin/config/fallback ===
+HTTP 404
+{
+  "code": 404,
+  "message": "Not Found",
+  "data": null
+}
+
+=== 9. GET /knowledge/docs ===
+HTTP 404
+{
+  "code": 404,
+  "message": "Not Found",
+  "data": null
+}
+
+=== 10. GET /admin/models ===
+HTTP 404
+{
+  "code": 404,
+  "message": "Not Found",
+  "data": null
+}
+
+=== 11. GET /admin/users ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "list": [
+      {
+        "id": 6,
+        "username": "test_user_review",
+        "role": "user",
+        "status": 1,
+        "created_at": "2026-08-28T06:47:26",
+        "updated_at": "2026-08-28T06:47:26"
+      },
+      {
+        "id": 5,
+        "username": "test_admin",
+        "role": "user",
+        "status": 1,
+        "created_at": "2026-08-28T03:01:16",
+        "updated_at": "2026-08-28T03:01:16"
+      },
+      {
+        "id": 4,
+        "username": "123",
+        "role": "admin",
+        "status": 1,
+        "created_at": "2026-08-18T09:22:15",
+        "updated_at": "2026-08-18T09:22:53"
+      },
+      {
+        "id": 3,
+        "username": "test_user_358630",
+        "role": "user",
+        "status": 0,
+        "created_at": "2026-08-18T04:59:20",
+        "updated_at": "2026-08-18T09:23:00"
+      },
+      {
+        "id": 2,
+        "username": "demo",
+        "role": "user",
+        "status": 1,
+        "created_at": "2026-08-18T04:12:32",
+        "updated_at": "2026-08-18T04:12:32"
+      },
+      {
+        "id": 1,
+        "username": "admin",
+        "role": "admin",
+        "status": 1,
+        "created_at": "2026-08-18T04:12:32",
+        "updated_at": "2026-08-18T04:12:32"
+      }
+    ],
+    "total": 6,
+    "page": 1,
+    "page_size": 20
+  }
+}
+
+=== 12. /openapi.json size: 46947 bytes ===
+
+=== 13. GET /auth/me (no token, expect 401/unauth) ===
+HTTP 401
+{
+  "code": 401,
+  "message": "请先登录",
+  "data": null
+}
+
+=== 14. POST /auth/login wrong password ===
+HTTP 401
+{
+  "code": 401,
+  "message": "用户名或密码错误",
+  "data": null
+}
+
+=== 15. GET /chat/sessions (no token, expect 401/unauth) ===
+HTTP 401
+{
+  "code": 401,
+  "message": "请先登录",
+  "data": null
+}
+
+=== 16. POST /auth/register (test_user_xx / 123456) ===
+HTTP 401
+{
+  "code": 401,
+  "message": "用户名已存在",
+  "data": null
+}
+
+=== 17. POST /auth/login as test_user_review ===
+HTTP 200
+{
+  "code": 0,
+  "message": "success",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJ1c2VybmFtZSI6InRlc3RfdXNlcl9yZXZpZXciLCJyb2xlIjoidXNlciIsImV4cCI6MTc4Nzk4NzA0MywiaWF0IjoxNzg3OTAwNjQzfQ.GpBbacdr3DRsCnB2B46jFHULWsGp3uXTpFU01JSB2wE",
+    "token_type": "bearer",
+    "expires_in": 86400,
+    "user": {
+      "id": 6,
+      "username": "test_user_review",
+      "role": "user",
+      "status": 1,
+      "created_at": "2026-08-28T06:47:26"
+    }
+  }
+}
+
+DONE -> test-state.json
