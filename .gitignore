@@ -70,3 +70,8 @@ playwright-report/
 
 # ===== 临时截图 =====
 *.png.tmp
+
+# ===== Sealos 部署本地实例配置(包含密钥,不入库)=====
+.sealos/template/args.local.json
+.sealos/state.json
+.sealos/build/

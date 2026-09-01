@@ -1,0 +1,607 @@
+# Sealos Application Template - AI Customer Service (ZNKF)
+# 部署到 Sealos Cloud 北京区域 (bja.sealos.run)
+#
+# 包含组件:
+#   1. frontend  (Vue3 + Nginx, 静态站点 + 反代 /api → backend)
+#   2. backend   (FastAPI + Gunicorn + Uvicorn workers)
+#   3. redis     (限流 + Webhook 去重 + Session)
+#   4. etcd      (Milvus 元数据)
+#   5. minio     (Milvus 索引 + 知识库文件)
+#   6. milvus    (向量数据库 standalone)
+#
+# MySQL 推荐:在 Sealos 控制台 -> 数据库 -> 创建 MySQL 8.0 实例,
+#            然后把连接信息填入 inputs.MYSQL_HOST / MYSQL_PASSWORD 等。
+#
+# 镜像需先在本地构建并 push 到 Docker Hub:
+#   ./scripts/sealos_build_push.ps1
+# 然后用以下命令部署:
+#   node <SKILL_DIR>/scripts/deploy-template.mjs .sealos/template/index.yaml \
+#     --args-file .sealos/template/args.json
+
+apiVersion: template.sealos.io/v1beta1
+kind: Template
+metadata:
+  name: ai-customer-znkf
+spec:
+  name: ai-customer-znkf
+  # 镜像 tag 在 build_push 后由脚本自动写入 .sealos/template/args.json
+  # 这里通过 defaults 引用,避免硬编码
+  defaults:
+    app_name: ai-customer-znkf
+    app_host: ai-customer-znkf
+    frontend_image: your-dockerhub-username/ai-customer-frontend:latest
+    backend_image: your-dockerhub-username/ai-customer-backend:latest
+    # 由 Sealos 自动生成的随机密钥
+    jwt_secret: '{{ random(48) }}'
+    crypto_secret: '{{ random(32) }}'
+    webhook_hmac: '{{ random(32) }}'
+    openai_compat_key: '{{ random(32) }}'
+    minio_access_key: '{{ random(16) }}'
+    minio_secret_key: '{{ random(32) }}'
+
+  # 用户必须在部署时提供以下输入
+  inputs:
+    # ===== Docker Hub 镜像 tag(由 build_push.ps1 自动生成)=====
+    frontend_image_tag:
+      description: '前端镜像 tag (your-dockerhub-username/ai-customer-frontend:<tag>)'
+      type: string
+      default: '20260901-000000'
+      required: true
+    backend_image_tag:
+      description: '后端镜像 tag (your-dockerhub-username/ai-customer-backend:<tag>)'
+      type: string
+      default: '20260901-000000'
+      required: true
+
+    # ===== 外部 MySQL(推荐用 Sealos 数据库云服务创建)=====
+    mysql_host:
+      description: 'MySQL 主机名(推荐在 Sealos 控制台创建 MySQL 8.0 实例后填入)'
+      type: string
+      default: ''
+      required: true
+    mysql_port:
+      description: 'MySQL 端口'
+      type: string
+      default: '3306'
+      required: false
+    mysql_user:
+      description: 'MySQL 用户名'
+      type: string
+      default: 'root'
+      required: false
+    mysql_password:
+      description: 'MySQL 密码(必填)'
+      type: password
+      default: ''
+      required: true
+    mysql_database:
+      description: 'MySQL 数据库名'
+      type: string
+      default: 'ai_customer'
+      required: false
+
+    # ===== LLM / Embedding API keys =====
+    llm_api_key:
+      description: 'LLM API key (duc.ai 或 OpenAI 兼容端点)'
+      type: password
+      default: ''
+      required: true
+    embedding_api_key:
+      description: 'Embedding API key (DashScope / OpenAI 兼容)'
+      type: password
+      default: ''
+      required: true
+
+    # ===== 可选:渠道适配层(智齿科技)=====
+    zhibo_api_token:
+      description: '智齿科技 API token(可选,不填则禁用智齿渠道)'
+      type: password
+      default: ''
+      required: false
+
+---
+# ============================ Secret: 应用密钥 ============================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ai-customer-secrets
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+type: Opaque
+stringData:
+  JWT_SECRET_KEY: ${{ defaults.jwt_secret }}
+  CRYPTO_SECRET_KEY: ${{ defaults.crypto_secret }}
+  WEBHOOK_HMAC_SECRET: ${{ defaults.webhook_hmac }}
+  OPENAI_COMPAT_API_KEY: ${{ defaults.openai_compat_key }}
+  LLM_API_KEY: ${{ inputs.llm_api_key }}
+  EMBEDDING_API_KEY: ${{ inputs.embedding_api_key }}
+  MYSQL_PASSWORD: ${{ inputs.mysql_password }}
+  ZHIBO_API_TOKEN: ${{ inputs.zhibo_api_token }}
+
+---
+# ============================ Redis(集群内单实例)============================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+    component: redis
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: ai-customer-znkf
+      component: redis
+  template:
+    metadata:
+      labels:
+        app: ai-customer-znkf
+        component: redis
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          command: ['redis-server', '--save', '60', '1', '--loglevel', 'warning']
+          ports:
+            - containerPort: 6379
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits:   { cpu: 200m, memory: 256Mi }
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+spec:
+  selector:
+    app: ai-customer-znkf
+    component: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+
+---
+# ============================ Etcd(Milvus 元数据)============================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: etcd
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+    component: etcd
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: ai-customer-znkf
+      component: etcd
+  template:
+    metadata:
+      labels:
+        app: ai-customer-znkf
+        component: etcd
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: etcd
+          image: quay.io/coreos/etcd:v3.5.13
+          imagePullPolicy: IfNotPresent
+          command:
+            - etcd
+            - -advertise-client-urls=http://etcd:2379
+            - -listen-client-urls=http://0.0.0.0:2379
+            - --data-dir
+            - /etcd
+          env:
+            - name: ETCD_AUTO_COMPACTION_MODE
+              value: revision
+            - name: ETCD_AUTO_COMPACTION_RETENTION
+              value: '1000'
+            - name: ETCD_QUOTA_BACKEND_BYTES
+              value: '4294967296'
+            - name: ETCD_SNAPSHOT_COUNT
+              value: '50000'
+          ports:
+            - containerPort: 2379
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits:   { cpu: 200m, memory: 512Mi }
+          volumeMounts:
+            - name: etcd-data
+              mountPath: /etcd
+      volumes:
+        - name: etcd-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+spec:
+  selector:
+    app: ai-customer-znkf
+    component: etcd
+  ports:
+    - port: 2379
+      targetPort: 2379
+
+---
+# ============================ MinIO(对象存储)============================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+    component: minio
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: ai-customer-znkf
+      component: minio
+  template:
+    metadata:
+      labels:
+        app: ai-customer-znkf
+        component: minio
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2024-08-03T04-33-23Z
+          imagePullPolicy: IfNotPresent
+          command: ['minio', 'server', '/data', '--console-address', ':9001']
+          env:
+            - name: MINIO_ROOT_USER
+              value: ${{ defaults.minio_access_key }}
+            - name: MINIO_ROOT_PASSWORD
+              value: ${{ defaults.minio_secret_key }}
+          ports:
+            - containerPort: 9000
+              name: s3
+            - containerPort: 9001
+              name: console
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { cpu: 500m, memory: 1Gi }
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+      volumes:
+        - name: minio-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+spec:
+  selector:
+    app: ai-customer-znkf
+    component: minio
+  ports:
+    - name: s3
+      port: 9000
+      targetPort: 9000
+    - name: console
+      port: 9001
+      targetPort: 9001
+
+---
+# ============================ Milvus(向量数据库)============================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milvus
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+    component: milvus
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: ai-customer-znkf
+      component: milvus
+  template:
+    metadata:
+      labels:
+        app: ai-customer-znkf
+        component: milvus
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: milvus
+          image: milvusdb/milvus:v2.4.13
+          imagePullPolicy: IfNotPresent
+          command: ['milvus', 'run', 'standalone']
+          env:
+            - name: ETCD_ENDPOINTS
+              value: etcd:2379
+            - name: MINIO_ADDRESS
+              value: minio:9000
+            - name: MINIO_ACCESS_KEY_ID
+              value: ${{ defaults.minio_access_key }}
+            - name: MINIO_SECRET_ACCESS_KEY
+              value: ${{ defaults.minio_secret_key }}
+            - name: MINIO_BUCKET_NAME
+              value: a-bucket
+            - name: ETCD_USE_EMBED
+              value: 'false'
+            - name: COMMON_STORAGETYPE
+              value: minio
+          ports:
+            - containerPort: 19530
+              name: grpc
+            - containerPort: 9091
+              name: metrics
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits:   { cpu: 1000m, memory: 2Gi }
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9091
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 20
+            failureThreshold: 5
+          volumeMounts:
+            - name: milvus-data
+              mountPath: /var/lib/milvus
+      volumes:
+        - name: milvus-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milvus
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+spec:
+  selector:
+    app: ai-customer-znkf
+    component: milvus
+  ports:
+    - name: grpc
+      port: 19530
+      targetPort: 19530
+    - name: metrics
+      port: 9091
+      targetPort: 9091
+
+---
+# ============================ Backend(FastAPI)============================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+    component: backend
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: ai-customer-znkf
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: ai-customer-znkf
+        component: backend
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: backend
+          image: ${{ defaults.backend_image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: ai-customer-secrets
+          env:
+            - name: APP_ENV
+              value: production
+            - name: LOG_LEVEL
+              value: INFO
+            - name: APP_PORT
+              value: '8000'
+            - name: MYSQL_HOST
+              value: ${{ inputs.mysql_host }}
+            - name: MYSQL_PORT
+              value: ${{ inputs.mysql_port }}
+            - name: MYSQL_USER
+              value: ${{ inputs.mysql_user }}
+            - name: MYSQL_DATABASE
+              value: ${{ inputs.mysql_database }}
+            # 集群内服务名(固定)
+            - name: REDIS_HOST
+              value: redis
+            - name: REDIS_PORT
+              value: '6379'
+            - name: MILVUS_HOST
+              value: milvus
+            - name: MILVUS_PORT
+              value: '19530'
+            - name: MINIO_HOST
+              value: minio
+            - name: MINIO_PORT
+              value: '9000'
+            - name: MINIO_ACCESS_KEY
+              value: ${{ defaults.minio_access_key }}
+            - name: MINIO_SECRET_KEY
+              value: ${{ defaults.minio_secret_key }}
+            - name: MINIO_BUCKET
+              value: knowledge
+            - name: MINIO_SECURE
+              value: 'false'
+            - name: CORS_ALLOWED_ORIGINS
+              value: 'https://${{ defaults.app_host }}.${{ SEALOS_CLOUD_DOMAIN }}'
+          resources:
+            requests: { cpu: 200m, memory: 256Mi }
+            limits:   { cpu: 1000m, memory: 1Gi }
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            failureThreshold: 6
+          volumeMounts:
+            - name: backend-data
+              mountPath: /app/data
+      volumes:
+        - name: backend-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+spec:
+  selector:
+    app: ai-customer-znkf
+    component: backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+
+---
+# ============================ Frontend(Vue3 + Nginx)============================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+    component: frontend
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: ai-customer-znkf
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: ai-customer-znkf
+        component: frontend
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: frontend
+          image: ${{ defaults.frontend_image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits:   { cpu: 200m, memory: 256Mi }
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+spec:
+  selector:
+    app: ai-customer-znkf
+    component: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+# ============================ Ingress(对外暴露前端)============================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ai-customer-znkf
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: '100m'
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '300s'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '300s'
+    # SSE 关键:关闭 buffering
+    nginx.ingress.kubernetes.io/proxy-buffering: 'off'
+spec:
+  rules:
+    - host: ${{ defaults.app_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - ${{ defaults.app_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+      secretName: ${{ SEALOS_CERT_SECRET_NAME }}
+
+---
+# ============================ Sealos App CRD ============================
+apiVersion: app.sealos.io/v1
+kind: App
+metadata:
+  name: ai-customer-znkf
+  labels:
+    app: ai-customer-znkf
+    cloud.sealos.io/app-name: ai-customer-znkf
+spec:
+  name: AI 智能客服 ZNKF
+  type: link
+  displayType: normal
+  data:
+    url: https://${{ defaults.app_host }}.${{ SEALOS_CLOUD_DOMAIN }}
+  icon: https://raw.githubusercontent.com/zijie10290927-wq/KF2/main/ai-customer-frontend/public/favicon.svg

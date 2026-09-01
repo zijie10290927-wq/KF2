@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# 包构建产物
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# 测试 / 工具缓存
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+
+# 本地数据 / 降级产物
+data/
+.data/
+*.db
+*.sqlite
+*.sqlite3
+
+# 环境变量文件(密钥严禁进镜像层)
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# Docker 自身
+Dockerfile
+.dockerignore

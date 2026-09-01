@@ -1,0 +1,23 @@
+# Node
+node_modules/
+dist/
+build/
+
+# 测试 / 工具缓存
+.npm/
+.eslintcache
+.cache/
+
+# 本地配置
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Docker 自身
+Dockerfile
+.dockerignore

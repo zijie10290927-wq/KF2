@@ -43,6 +43,8 @@ repos:
       - id: detect-private-key        # 检测私钥文件
       - id: check-merge-conflict      # 检查未解决的合并冲突
       - id: check-yaml
+        # Sealos template 是多文档 YAML(`---` 分隔的多个 K8s 资源),check-yaml 默认只接受单文档
+        exclude: ^\.sealos/template/
       - id: end-of-file-fixer
       - id: trailing-whitespace
         exclude: \.(md|html)$
