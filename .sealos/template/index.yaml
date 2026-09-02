@@ -29,8 +29,8 @@ spec:
   defaults:
     app_name: ai-customer-znkf
     app_host: ai-customer-znkf
-    frontend_image: your-dockerhub-username/ai-customer-frontend:latest
-    backend_image: your-dockerhub-username/ai-customer-backend:latest
+    frontend_image: zijie1029/ai-customer-frontend:latest
+    backend_image: zijie1029/ai-customer-backend:latest
     # 由 Sealos 自动生成的随机密钥
     jwt_secret: '{{ random(48) }}'
     crypto_secret: '{{ random(32) }}'
@@ -45,12 +45,12 @@ spec:
     frontend_image_tag:
       description: '前端镜像 tag (your-dockerhub-username/ai-customer-frontend:<tag>)'
       type: string
-      default: '20260901-000000'
+      default: '20260902-100052'
       required: true
     backend_image_tag:
       description: '后端镜像 tag (your-dockerhub-username/ai-customer-backend:<tag>)'
       type: string
-      default: '20260901-000000'
+      default: '20260902-100052'
       required: true
 
     # ===== 外部 MySQL(推荐用 Sealos 数据库云服务创建)=====
